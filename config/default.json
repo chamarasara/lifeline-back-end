@@ -1,0 +1,4 @@
+{
+    "mongoURI": "mongodb+srv://chamara:lifelineerp123@erp.vhxyn.mongodb.net/ERP?retryWrites=true&w=majority",
+    "jwtSecret" : "token"
+}
