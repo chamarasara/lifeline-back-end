@@ -91,4 +91,32 @@ router.get('/single-user/:_id', async (req, res) => {
         res.status(500).send('Server Error')
     }
 })
+//update user
+router.patch('/update-user/:_id', async (req, res) => {
+    try {
+        id = req.params._id;
+        const updateOps = {};
+        for (const ops in req.body) {
+            updateOps[ops.propName] = ops.value;
+        }
+        User.update({ _id: id }, { $set: req.body })
+            .exec()
+            .then(result => {
+                User.findById(id)
+                    .then(docs => {
+                        console.log("docs****", docs)
+                        res.status(200).json(docs);
+                    })
+                    .catch(err => {
+                        console.log(err)
+                        res.status(500).json({
+                            error: err
+                        });
+                    });
+            })
+    } catch (error) {
+        console.error(error.message)
+        res.status(500).send('Server Error')
+    }
+})
 module.exports = router;
