@@ -18,13 +18,12 @@ router.post('/newuser', [
         if (!errors.isEmpty()) {
             return res.status(400).json({ errors: errors.array() })
         }
-        console.log(req.body)
         const {
-            firstName, lastName, mobileNo, nic, email, birthDay, gender, userName, password, userRole,
-            address: { city, country, lane, no, postalCode }
+            firstName, lastName, mobileNo, nic, email, birthDay, gender, userName, password,
+            address: { city, country, lane, no, postalCode }, userRole: { id, userTypeCode, userTypeName}
         } = req.body
+        console.log(req.body.userRole)
         try {
-
             //check user exists
             let user = await User.findOne({ userName })
             if (user) {
@@ -38,6 +37,7 @@ router.post('/newuser', [
             })
 
             user = new User({
+                avatar,
                 firstName,
                 lastName,
                 mobileNo,
@@ -47,8 +47,8 @@ router.post('/newuser', [
                 gender,
                 userName,
                 password,
-                userRole,
-                address: { city, country, lane, no, postalCode }
+                address: { city, country, lane, no, postalCode },
+                userRole: { id, userTypeCode, userTypeName }
             })
             //encrypt password
             const salt = await bcrypt.genSalt(10)
@@ -62,4 +62,33 @@ router.post('/newuser', [
         }
     });
 
+//get all user
+router.get('/all-users', async (req, res) => {
+    try {
+        const user = await User.find()
+            .exec()
+            .then(docs => {
+                console.log(docs);
+                res.status(200).json(docs);
+            })
+    } catch (error) {
+        console.error(error.message)
+        res.status(500).send('Server Error')
+    }
+})
+//get single user
+router.get('/single-user/:_id', async (req, res) => {
+    try {
+        id = req.params._id;
+        const user = await User.findById(id)
+            .exec()
+            .then(docs => {
+                console.log(docs);
+                res.status(200).json(docs);
+            })
+    } catch (error) {
+        console.error(error.message)
+        res.status(500).send('Server Error')
+    }
+})
 module.exports = router;

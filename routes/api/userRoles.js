@@ -43,18 +43,32 @@ router.post('/new-user-role', [
         }
     });
 
-    router.get('/all-user-roles', async (req, res) => {
-        try {
-            const userRoles = await UserRoles.find()
+router.get('/all-user-roles', async (req, res) => {
+    try {
+        const userRoles = await UserRoles.find()
             .exec()
             .then(docs => {
                 console.log(docs);
                 res.status(200).json(docs);
             })
-        } catch (error) {
-            console.error(error.message)
-            res.status(500).send('Server Error')
-        }
-    })
+    } catch (error) {
+        console.error(error.message)
+        res.status(500).send('Server Error')
+    }
+})
+router.get('/single-user_role/:_id', async (req, res) => {
+    try {
+        id = req.params._id;
+        const userRoles = await UserRoles.findById(id)
+            .exec()
+            .then(docs => {
+                console.log(docs);
+                res.status(200).json(docs);
+            })
+    } catch (error) {
+        console.error(error.message)
+        res.status(500).send('Server Error')
+    }
+})
 
 module.exports = router;
