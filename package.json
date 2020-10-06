@@ -4,7 +4,7 @@
   "description": "ERP System for Lifeguard Manufactoring",
   "main": "index.js",
   "scripts": {
-    "start": "node server",
+    "start": "nodemon server",
     "server": "nodemon server"
   },
   "author": "Chamara Sarathchandra",

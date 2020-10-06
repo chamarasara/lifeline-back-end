@@ -15,6 +15,7 @@ app.use(cors())
 app.use('/api/users', require('./routes/api/users'))
 app.use('/api/user-roles', require('./routes/api/userRoles'))
 app.use('/api/auth', require('./routes/api/auth'))
+app.use('/api/master-data/raw-material', require('./routes/api/masterdata/rawMaterial'))
 
 
 const PORT = process.env.PORT || 5000;

@@ -5,10 +5,11 @@ const gravatar = require('gravatar')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const config = require('config')
+const auth = require('../../middleware/auth')
 
 const User = require('../../models/User')
 //New user
-router.post('/newuser', [
+router.post('/newuser', auth, [
     check('userName', 'Username required').not().isEmpty(),
     check('email', 'Email invalid').isEmail(),
     check('password', 'Please enter password with 6 or more characters').isLength({ min: 6 })
@@ -63,7 +64,7 @@ router.post('/newuser', [
     });
 
 //get all user
-router.get('/all-users', async (req, res) => {
+router.get('/all-users', auth, async (req, res) => {
     try {
         const user = await User.find()
             .exec()
@@ -91,8 +92,9 @@ router.get('/single-user/:_id', async (req, res) => {
         res.status(500).send('Server Error')
     }
 })
+
 //update user
-router.patch('/update-user/:_id', async (req, res) => {
+router.patch('/update-user/:_id', auth, async (req, res) => {
     try {
         if (req.body.password) {
             id = req.params._id;
@@ -164,7 +166,7 @@ router.patch('/update-user/:_id', async (req, res) => {
     }
 })
 //Delete user
-router.delete('/delete-user/:_id', async (req, res) => {
+router.delete('/delete-user/:_id', auth, async (req, res) => {
     try {
         id = req.params._id;
         const user = await User.remove({ _id: id })
