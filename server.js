@@ -16,6 +16,8 @@ app.use('/api/users', require('./routes/api/users'))
 app.use('/api/user-roles', require('./routes/api/userRoles'))
 app.use('/api/auth', require('./routes/api/auth'))
 app.use('/api/master-data/raw-material', require('./routes/api/masterdata/rawMaterial'))
+app.use('/api/master-data/supplier-master', require('./routes/api/masterdata/supplierMaster'))
+app.use('/api/master-data/customer-master', require('./routes/api/masterdata/customerMaster'))
 
 
 const PORT = process.env.PORT || 5000;
