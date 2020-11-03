@@ -22,9 +22,13 @@ const SupplierMasterSchema = new mongoose.Schema({
         no2: { type: String },
         postalCode2: { type: String }
     },
-    state: {type:String},
-    currency:{type:String},
-    creditPeriod: { type: String }
+    state: { type: String },
+    currency: { type: String },
+    creditPeriod: { type: Number }
 
-})
+},
+    {
+        timestamps: true
+    }
+)
 module.exports = SupplierMaster = mongoose.model('SupplierMaster', SupplierMasterSchema)

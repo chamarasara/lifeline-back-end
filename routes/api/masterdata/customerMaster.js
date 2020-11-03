@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { check, validationResult } = require('express-validator')
+const mongoose = require('mongoose')
 //const auth = require('../../middleware/auth')
 
 const CustomerMaster = require('../../../models/master/CustomerMaster');
@@ -25,9 +26,10 @@ router.post('/new-customer', [
                 city2, country2, lane2, no2, postalCode2
             }
         } = req.body
+        const id = mongoose.Types.ObjectId()
         try {
             customerMaster = new CustomerMaster({
-                customerName, mobileNo, fax, registerNo, division, email, companyName, state, currency, debitPeriod,
+                customerName,id, mobileNo, fax, registerNo, division, email, companyName, state, currency, debitPeriod,
                 communicationAddress: {
                     city, country, lane, no, postalCode
                 },
@@ -76,19 +78,41 @@ router.get('/single-customer/:_id', async (req, res) => {
 router.patch('/update-customer/:_id', async (req, res) => {
     try {
         id = req.params._id;
-        console.log(req.body)
-        const updateOps = {};
-
-        for (const ops in req.body) {
-            updateOps[ops.propName] = ops.value;
+        const updateOps = {
+            // customerName: req.body.customerName,
+            // mobileNo: req.body.mobileNo, 
+            // fax: req.body.fax, 
+            // registerNo: req.body.registerNo, 
+            // division: req.body.division, 
+            // email: req.body.email, 
+            // companyName: req.body.companyName, 
+            // state: req.body.state, 
+            // currency: req.body.currency, 
+            // debitPeriod: req.body.debitPeriod,
+            // communicationAddress: {
+            //     city: req.body.communicationAddress.city, 
+            //     country: req.body.communicationAddress.country, 
+            //     lane: req.body.communicationAddress.lane, 
+            //     no: req.body.communicationAddress.no, 
+            //     postalCode: req.body.communicationAddress.postalCode
+            // },
+            // registerAddress: {
+            //     city2: req.body.registerAddress.city2, 
+            //     country2: req.body.registerAddress.country2, 
+            //     lane2: req.body.registerAddress.lane2, 
+            //     no2: req.body.registerAddress.no2, 
+            //     postalCode2: req.body.registerAddress.postalCode2
+            // }
+        };
+        for (const ops in Object.values(req.body)) {
+            updateOps[ops] = ops;
         }
 
-        CustomerMaster.update({ _id: id }, { $set: req.body })
+        CustomerMaster.findByIdAndUpdate({ _id: id }, { $set: req.body })
             .exec()
             .then(result => {
                 CustomerMaster.findById(id)
                     .then(docs => {
-                        console.log("docs****", docs)
                         res.status(200).json(docs);
                     })
                     .catch(err => {

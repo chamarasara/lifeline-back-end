@@ -76,8 +76,6 @@ router.get('/single-supplier/:_id', async (req, res) => {
 router.patch('/update-supplier/:_id', async (req, res) => {
     try {
         id = req.params._id;
-        console.log(req.params._id)
-        console.log(req.body)
         const updateOps = {};
 
         for (const ops in req.body) {
@@ -89,7 +87,6 @@ router.patch('/update-supplier/:_id', async (req, res) => {
             .then(result => {
                 SupplierMaster.findById(id)
                     .then(docs => {
-                        console.log("docs****", docs)
                         res.status(200).json(docs);
                     })
                     .catch(err => {

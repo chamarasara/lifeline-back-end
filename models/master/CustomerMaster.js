@@ -2,6 +2,7 @@ const mongoose = require('mongoose')
 
 const CustomerMasterSchema = new mongoose.Schema({
     date: { type: Date, default: Date.now },
+    id: { type: String },
     customerName: { type: String, require: true },
     mobileNo: { type: String, require: true },
     fax: { type: String, require: true },
@@ -24,7 +25,11 @@ const CustomerMasterSchema = new mongoose.Schema({
     },
     state: { type: String },
     currency: { type: String },
-    debitPeriod: { type: String }
+    debitPeriod: { type: Number }
 
-})
+},
+    {
+        timestamps: true
+    }
+)
 module.exports = CustomerMaster = mongoose.model('CustomerMaster', CustomerMasterSchema)

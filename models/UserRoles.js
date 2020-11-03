@@ -2,6 +2,7 @@ const mongoose = require('mongoose')
 
 const UserRolesSchema = new mongoose.Schema({
     date: { type: Date, default: Date.now },
+    id:{type:String},
     userTypeCode: { type: String, require: true },
     userTypeName: { type: String, require: true },
     permissions: {

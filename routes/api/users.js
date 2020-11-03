@@ -9,7 +9,7 @@ const auth = require('../../middleware/auth')
 
 const User = require('../../models/User')
 //New user
-router.post('/newuser', auth, [
+router.post('/newuser', [
     check('userName', 'Username required').not().isEmpty(),
     check('email', 'Email invalid').isEmail(),
     check('password', 'Please enter password with 6 or more characters').isLength({ min: 6 })
@@ -55,7 +55,7 @@ router.post('/newuser', auth, [
             const salt = await bcrypt.genSalt(10)
             user.password = await bcrypt.hash(password, salt)
             await user.save()
-            res.send('User registerd')
+            res.send(user)
             //return jwt token
         } catch (error) {
             console.error(error.message)
