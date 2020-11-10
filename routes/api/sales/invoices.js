@@ -14,5 +14,7 @@ router.get('/single-invoice/:id', InvoicesController.single_invoice);
 router.patch('/update-invoice/:id', InvoicesController.update_invoice);
 //Delete purchase order
 router.delete('/delete-invoice/:id', InvoicesController.delete_invoice);
+//Search
+router.post('/search-invoices/', InvoicesController.search_invoices);
 
 module.exports = router;

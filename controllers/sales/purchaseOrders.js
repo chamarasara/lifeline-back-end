@@ -163,14 +163,8 @@ exports.delete_purchase_order = (req, res, next) => {
 exports.search_purchase_orders = (req, res, next) => {
     const startDate = moment(req.body.formValues.startDate).format('DD/MM/YYYY')
     const endDate = moment(req.body.formValues.endDate).format('DD/MM/YYYY')
-    console.log(endDate)
     PurchaseOrders.aggregate(
         [
-            // {
-            //     '$match': {
-            //         $or: [{ supplierId: req.body.searchText }, { rawMaterials: searchText }]
-            //     }
-            // },
             {
                 '$lookup': {
                     from: 'suppliermasters',
@@ -210,17 +204,9 @@ exports.search_purchase_orders = (req, res, next) => {
                     ]
 
                 }
-            }
-            // {
-            //     '$match': {
-            //         purchaseorder_rawMaterial: {
-            //             $elemMatch: { id: "5f8de0f201a9ef48ac974019"}
-            //         } 
-            //     }
-            // }
+            }           
         ])
         .then(result => {
-            console.log("result**********", result)
             res.status(200).json(result);
         })
         .catch(err => {

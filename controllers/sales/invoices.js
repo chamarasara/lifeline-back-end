@@ -1,5 +1,6 @@
 const Invoices = require('../../models/invoices/invoices');
 const mongoose = require('mongoose');
+const moment = require('moment');
 
 //Add new purchase order
 exports.add_new_invoice = (req, res, next) => {
@@ -129,6 +130,53 @@ exports.delete_invoice = (req, res, next) => {
     const id = req.params.id;
     Invoices.remove({ _id: id })
         .exec()
+        .then(result => {
+            res.status(200).json(result);
+        })
+        .catch(err => {
+            res.status(500).json({
+                error: err
+            })
+        });
+}
+//Search invoices
+exports.search_invoices = (req, res, next) => {
+    const startDate = moment(req.body.formValues.startDate).format('MM/DD/YYYY')
+    const endDate = moment(req.body.formValues.endDate).format('MM/DD/YYYY')
+    Invoices.aggregate(
+        [
+            {
+                '$lookup': {
+                    from: 'customermasters',
+                    localField: 'customerId',
+                    foreignField: 'id',
+                    as: 'searchCustomer'
+                }
+            },
+            {
+                '$lookup': {
+                    from: 'productmasters',
+                    localField: 'products.id',
+                    foreignField: 'id',
+                    as: 'searchProducts'
+                }
+            },            
+            {
+                '$match': {
+                    $or: [
+                        { "searchProducts.productName": req.body.formValues.searchText },
+                        { "searchCustomer.customerName": req.body.formValues.searchText },
+                        {
+                            date: {
+                                $gte: new Date(startDate),
+                                $lte: new Date(endDate)
+                            }
+                        }
+                    ]
+
+                }
+            }
+        ])
         .then(result => {
             res.status(200).json(result);
         })
