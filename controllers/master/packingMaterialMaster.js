@@ -12,6 +12,7 @@ exports.packing_material_add_new = (req, res, next) => {
         division: req.body.division,
         materialState: req.body.materialState,
         suppliers: req.body.suppliers,
+        materialDescription: req.body.materialDescription,
         mrpOne: {
             generalData: {
                 baseUnit: req.body.mrpOne.generalData.baseUnit,

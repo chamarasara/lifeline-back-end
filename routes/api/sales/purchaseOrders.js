@@ -14,5 +14,7 @@ router.get('/single-purchase-order/:id', PurchaseOrdersController.purchase_order
 router.patch('/update-purchase-order/:id', PurchaseOrdersController.update_purchase_order);
 //Delete purchase order
 router.delete('/delete-purchase-order/:id', PurchaseOrdersController.delete_purchase_order);
+//Search
+router.post('/search-purchase-order/', PurchaseOrdersController.search_purchase_orders);
 
 module.exports = router;

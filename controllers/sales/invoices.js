@@ -8,7 +8,7 @@ exports.add_new_invoice = (req, res, next) => {
         id: mongoose.Types.ObjectId(),
         customerId: req.body.customerId,
         userId: req.body.userId,
-        products: req.body.products
+        products: req.body.products,
     });
     invoices.save()
         .then(result => {

@@ -1,14 +1,18 @@
 const PurchaseOrders = require('../../models/purchaseOrders/purchaseOrders');
 const mongoose = require('mongoose');
-
+const _ = require('lodash');
+const moment = require('moment');
+const Supplier = require('../../models/master/SupplierMaster');
 //Add new purchase order
 exports.purchase_order_add_new = (req, res, next) => {
     console.log(req.body)
     const purchaseOrders = new PurchaseOrders({
         id: mongoose.Types.ObjectId(),
-        customerId: req.body.customerId,
+        supplierId: req.body.supplierId,
         userId: req.body.userId,
-        products: req.body.products
+        rawMaterials: req.body.rawMaterials,
+        packingMaterials: req.body.packingMaterials,
+        date: moment().format('DD/MM/YYYY, h:mm:ss a'),
     });
     purchaseOrders.save()
         .then(result => {
@@ -26,20 +30,29 @@ exports.purchase_orders_get_all = (req, res, next) => {
     PurchaseOrders.aggregate(
         [{
             '$lookup': {
-                from: 'customermasters',
-                localField: 'customerId',
+                from: 'suppliermasters',
+                localField: 'supplierId',
                 foreignField: 'id',
-                as: 'customer'
+                as: 'supplier'
             }
         },
         {
             '$lookup': {
-                from: 'productmasters',
-                localField: 'products.id',
+                from: 'rawmaterialmasters',
+                localField: 'rawMaterials.id',
                 foreignField: 'id',
-                as: 'productsList'
+                as: 'rawMaterialsList'
             }
-        }]
+        },
+        {
+            '$lookup': {
+                from: 'packingmaterialmasters',
+                localField: 'packingMaterials.id',
+                foreignField: 'id',
+                as: 'packingMaterialsList'
+            }
+        }
+        ]
     )
         .exec()
         .then(docs => {
@@ -59,30 +72,37 @@ exports.purchase_orders_get_one = (req, res, next) => {
         [
             {
                 '$match': {
-                id: req.params.id
+                    id: req.params.id
                 }
             },
             {
                 '$lookup': {
-                    from: 'customermasters',
-                    localField: 'customerId',
+                    from: 'suppliermasters',
+                    localField: 'supplierId',
                     foreignField: 'id',
-                    as: 'customer'
+                    as: 'supplier'
                 }
             },
             {
                 '$lookup': {
-                    from: 'productmasters',
-                    localField: 'products.id',
+                    from: 'rawmaterialmasters',
+                    localField: 'rawMaterials.id',
                     foreignField: 'id',
-                    as: 'productsList'
+                    as: 'rawMaterialsList'
+                }
+            },
+            {
+                '$lookup': {
+                    from: 'packingmaterialmasters',
+                    localField: 'packingMaterials.id',
+                    foreignField: 'id',
+                    as: 'packingMaterialsList'
                 }
             }]
     )
         .exec()
         .then(doc => {
             if (doc) {
-                console.log("doccccc", doc)
                 res.status(200).json(doc);
             } else {
                 res.status(404).json({ message: "No valid ID found" })
@@ -95,23 +115,20 @@ exports.purchase_orders_get_one = (req, res, next) => {
         })
 }
 
-//Update raw material
+//Update purchase orders
 exports.update_purchase_order = (req, res, next) => {
 
     const id = req.params.id;
-    console.log("*******id",id)
-    console.log("req body", req.body);
     const updateOps = {};
     for (const ops in req.body) {
         updateOps[ops.propName] = ops.value;
     }
-    
+
     PurchaseOrders.update({ _id: req.params.id }, { $set: req.body })
         .exec()
         .then(result => {
             PurchaseOrders.findById(id)
                 .then(docs => {
-                    console.log("docs****", docs)
                     res.status(200).json(docs);
                 })
                 .catch(err => {
@@ -128,12 +145,82 @@ exports.update_purchase_order = (req, res, next) => {
             });
         });
 }
-//Delete raw material
+//Delete purchase orders
 exports.delete_purchase_order = (req, res, next) => {
     const id = req.params.id;
     PurchaseOrders.remove({ _id: id })
         .exec()
         .then(result => {
+            res.status(200).json(result);
+        })
+        .catch(err => {
+            res.status(500).json({
+                error: err
+            })
+        });
+}
+//Search purchase orders
+exports.search_purchase_orders = (req, res, next) => {
+    const startDate = moment(req.body.formValues.startDate).format('DD/MM/YYYY')
+    const endDate = moment(req.body.formValues.endDate).format('DD/MM/YYYY')
+    console.log(endDate)
+    PurchaseOrders.aggregate(
+        [
+            // {
+            //     '$match': {
+            //         $or: [{ supplierId: req.body.searchText }, { rawMaterials: searchText }]
+            //     }
+            // },
+            {
+                '$lookup': {
+                    from: 'suppliermasters',
+                    localField: 'supplierId',
+                    foreignField: 'id',
+                    as: 'searchSupplier'
+                }
+            },
+            {
+                '$lookup': {
+                    from: 'rawmaterialmasters',
+                    localField: 'rawMaterials.id',
+                    foreignField: 'id',
+                    as: 'searchRawMaterial'
+                }
+            },
+            {
+                '$lookup': {
+                    from: 'packingmaterialmasters',
+                    localField: 'packingMaterials.id',
+                    foreignField: 'id',
+                    as: 'searchPackingMaterial'
+                }
+            },
+            {
+                '$match': {
+                    $or: [
+                        { "searchPackingMaterial.materialName": req.body.formValues.searchText },
+                        { "searchRawMaterial.materialName": req.body.formValues.searchText },
+                        { "searchSupplier.supplierName": req.body.formValues.searchText },
+                        {
+                            date: {
+                                $gte: new Date(startDate),
+                                $lte: new Date(endDate)
+                            }
+                        }
+                    ]
+
+                }
+            }
+            // {
+            //     '$match': {
+            //         purchaseorder_rawMaterial: {
+            //             $elemMatch: { id: "5f8de0f201a9ef48ac974019"}
+            //         } 
+            //     }
+            // }
+        ])
+        .then(result => {
+            console.log("result**********", result)
             res.status(200).json(result);
         })
         .catch(err => {

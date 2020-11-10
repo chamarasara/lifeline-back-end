@@ -11,6 +11,7 @@ exports.semi_finish_good_add_new = (req, res, next) => {
         baseUnitMeasure: req.body.baseUnitMeasure,
         division: req.body.division,
         materialState: req.body.materialState,
+        materialDescription: req.body.materialDescription,
         mrpOne: {
             generalData: {
                 baseUnit: req.body.mrpOne.generalData.baseUnit,

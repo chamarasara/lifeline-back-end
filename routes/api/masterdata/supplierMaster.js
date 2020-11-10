@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const { check, validationResult } = require('express-validator')
 //const auth = require('../../middleware/auth')
 
@@ -25,9 +26,10 @@ router.post('/new-supplier', [
                 city2, country2, lane2, no2, postalCode2
             }
         } = req.body
+        const id = mongoose.Types.ObjectId()
         try {
             supplierMaster = new SupplierMaster({
-                supplierName, mobileNo, fax, registerNo, division, email, companyName, state, currency, creditPeriod, 
+                supplierName,id, mobileNo, fax, registerNo, division, email, companyName, state, currency, creditPeriod, 
                 communicationAddress: {
                     city, country, lane, no, postalCode
                 },

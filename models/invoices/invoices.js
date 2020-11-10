@@ -6,6 +6,7 @@ const InvoicesSchema = new mongoose.Schema({
     customerId: { type: String, require: true },
     userId: { type: String },    
     products: { type: Array }    
+    
 },
     {
         timestamps: true

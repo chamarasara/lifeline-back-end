@@ -12,6 +12,7 @@ exports.raw_material_add_new = (req, res, next) => {
         baseUnitMeasure: req.body.baseUnitMeasure,
         division: req.body.division,
         materialState: req.body.materialState,
+        materialDescription: req.body.materialDescription,
         suppliers: req.body.suppliers,
         mrpOne: {
             generalData: {

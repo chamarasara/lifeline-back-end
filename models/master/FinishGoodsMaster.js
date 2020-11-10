@@ -9,6 +9,7 @@ const FinishGoodMasterSchema = new mongoose.Schema({
     baseUnitMeasure: { type: String, require: true },
     oldMaterialNumber: { type: String },
     division: { type: String },
+    materialDescription: { type: String },
     materialState: { type: String },
     mrpOne: {
         generalData: {

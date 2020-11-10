@@ -10,6 +10,7 @@ const PackingMaterialMasterSchema = new mongoose.Schema({
     oldMaterialNumber: { type: String },
     division: { type: String },
     materialState: { type: String },
+    materialDescription: { type: String },
     suppliers: { type: Array },
     mrpOne: {
         generalData: {

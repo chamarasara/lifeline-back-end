@@ -1,6 +1,7 @@
 const mongoose = require('mongoose')
 
 const SupplierMasterSchema = new mongoose.Schema({
+    id: { type: String, require: true},
     date: { type: Date, default: Date.now },
     supplierName: { type: String, require: true },
     mobileNo: { type: String, require: true },

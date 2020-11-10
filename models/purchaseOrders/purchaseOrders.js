@@ -1,11 +1,12 @@
 const mongoose = require('mongoose')
 
 const PurchaseOrdersSchema = new mongoose.Schema({
-    date: { type: Date, default: Date.now },
+    date: { type: Date },
     id: { type: String, require: true },
-    customerId: { type: String, require: true },
+    supplierId: { type: String, require: true },
     userId: { type: String },    
-    products: { type: Array }    
+    rawMaterials: { type: Array },
+    packingMaterials: { type: Array }    
 },
     {
         timestamps: true

@@ -10,6 +10,7 @@ const SemiFinishGoodMasterSchema = new mongoose.Schema({
     oldMaterialNumber: { type: String },
     division: { type: String },
     materialState: { type: String },
+    materialDescription: { type: String },
     mrpOne: {
         generalData: {
             baseUnit: { type: String },
