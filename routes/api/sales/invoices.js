@@ -16,5 +16,7 @@ router.patch('/update-invoice/:id', InvoicesController.update_invoice);
 router.delete('/delete-invoice/:id', InvoicesController.delete_invoice);
 //Search
 router.post('/search-invoices/', InvoicesController.search_invoices);
+//Print invoice
+router.get('/print-invoice/:id', InvoicesController.print_invoice);
 
 module.exports = router;
