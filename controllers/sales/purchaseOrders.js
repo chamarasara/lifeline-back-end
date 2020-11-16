@@ -163,6 +163,7 @@ exports.delete_purchase_order = (req, res, next) => {
 exports.search_purchase_orders = (req, res, next) => {
     const startDate = moment(req.body.formValues.startDate).format('DD/MM/YYYY')
     const endDate = moment(req.body.formValues.endDate).format('DD/MM/YYYY')
+    console.log("dates", startDate, " ", endDate)
     PurchaseOrders.aggregate(
         [
             {
