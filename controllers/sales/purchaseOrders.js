@@ -11,8 +11,7 @@ exports.purchase_order_add_new = (req, res, next) => {
         supplierId: req.body.supplierId,
         userId: req.body.userId,
         rawMaterials: req.body.rawMaterials,
-        packingMaterials: req.body.packingMaterials,
-        date: moment().format('DD/MM/YYYY, h:mm:ss a'),
+        packingMaterials: req.body.packingMaterials
     });
     purchaseOrders.save()
         .then(result => {
