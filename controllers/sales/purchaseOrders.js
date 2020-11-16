@@ -194,7 +194,7 @@ exports.search_purchase_orders = (req, res, next) => {
                     $or: [
                         { "searchPackingMaterial.materialName": req.body.formValues.searchText },
                         { "searchRawMaterial.materialName": req.body.formValues.searchText },
-                        { "searchSupplier.supplierName": req.body.formValues.searchText },
+                        { "searchSupplier.companyName": req.body.formValues.searchText },
                         {
                             date: {
                                 $gte: new Date(startDate),
