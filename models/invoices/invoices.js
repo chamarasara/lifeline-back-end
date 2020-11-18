@@ -5,6 +5,8 @@ const InvoicesSchema = new mongoose.Schema({
     id: { type: String, require: true },
     customerId: { type: String, require: true },
     userId: { type: String },
+    userName: { type: String },
+    userRole: { type: String },
     invoice_state: { type: String },
     products: { type: Array },
     invoiceNumber: { type: Number },

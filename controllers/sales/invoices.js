@@ -10,13 +10,19 @@ exports.add_new_invoice = (req, res, next) => {
     //generate invoice number
     function getInvoiceNumber() {
         for (var i = 0; i < 5; i++)
-            return (Date.now() + ((Math.random() * 100000).toFixed()))
+            var date = new Date()
+        const year = date.getFullYear()
+        const month = date.getMonth() + 1
+        console.log(year.toString() + month.toString() + (Math.random() * 100000).toFixed())
+        //return (moment(Date.now()).format('YYYY/MM') + ((Math.random() * 100000).toFixed()))
+        return year.toString() + month.toString() + (Math.random() * 100000).toFixed()
     }
-    console.log(req.body)
     const invoices = new Invoices({
         id: mongoose.Types.ObjectId(),
         customerId: req.body.customerId,
-        userId: req.body.userId,
+        userId: req.body.user.user.userId,
+        userName: req.body.user.user.userName,
+        userRole: req.body.user.user.userRole,
         invoice_state:"enabled",
         products: req.body.products,
         invoiceNumber: getInvoiceNumber()

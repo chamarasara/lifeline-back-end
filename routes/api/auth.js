@@ -41,12 +41,14 @@ router.post('/login', [
             const isMatch = await bcrypt.compare(password, user.password)
             if (!isMatch) {
                 return res.status(400).json(
-                    { errors: [{ msg: 'Access denied. Please enter valid username & password'}]}
+                    { errors: [{ msg: 'Access denied. Please enter valid username & password' }] }
                 )
             }
             const payload = {
                 user: {
-                    id: user.id
+                    userId: user.id,
+                    userName: user.userName,
+                    userRole: user.userRole.userTypeName
                 }
             }
             //return jwt token
