@@ -160,8 +160,8 @@ exports.delete_purchase_order = (req, res, next) => {
 }
 //Search purchase orders
 exports.search_purchase_orders = (req, res, next) => {
-    const startDate = moment(req.body.formValues.startDate).format('DD/MM/YYYY')
-    const endDate = moment(req.body.formValues.endDate).format('DD/MM/YYYY')
+    const startDate = moment(req.body.formValues.startDate).format('MM/DD/YYYY')
+    const endDate = moment(req.body.formValues.endDate).format('MM/DD/YYYY')
     console.log("dates", startDate, " ", endDate)
     PurchaseOrders.aggregate(
         [
@@ -196,7 +196,7 @@ exports.search_purchase_orders = (req, res, next) => {
                         { "searchRawMaterial.materialName": req.body.formValues.searchText },
                         { "searchSupplier.companyName": req.body.formValues.searchText },
                         {
-                            date: {
+                            createdAt: {
                                 $gte: new Date(startDate),
                                 $lte: new Date(endDate)
                             }

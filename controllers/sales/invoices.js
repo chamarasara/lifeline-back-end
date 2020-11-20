@@ -23,7 +23,7 @@ exports.add_new_invoice = (req, res, next) => {
         userId: req.body.user.user.userId,
         userName: req.body.user.user.userName,
         userRole: req.body.user.user.userRole,
-        invoice_state:"enabled",
+        invoice_state: "enabled",
         products: req.body.products,
         invoiceNumber: getInvoiceNumber()
     });
@@ -240,7 +240,9 @@ exports.print_invoice = (req, res, next) => {
                 createInvoice(result, "./invoice.pdf")
                 //generate empty pdf
                 function createInvoice(result, path) {
-                    let doc = new PDFDocument({ bufferPages: true });                    
+                    let i;
+                    let end;
+                    let doc = new PDFDocument({ bufferPages: true });
                     let buffers = [];
                     doc.on('data', buffers.push.bind(buffers));
                     doc.on('end', () => {
@@ -248,8 +250,8 @@ exports.print_invoice = (req, res, next) => {
                         let pdfData = Buffer.concat(buffers);
                         res.writeHead(200, {
                             'Content-Length': Buffer.byteLength(pdfData),
-                            'Content-Type': 'application/pdf;',   
-                            'Accept': 'application/pdf',                         
+                            'Content-Type': 'application/pdf;',
+                            'Accept': 'application/pdf',
                             'Content-Disposition': 'attachment;filename=invoice.pdf',
                         })
                             .end(pdfData);
@@ -257,9 +259,28 @@ exports.print_invoice = (req, res, next) => {
                     });
                     // doc.image('logo.jpg', { width: 150, height: 150 })
                     generateHeader(doc)
-                    generateFooter(doc)
+                    //generateFooter(doc)
                     generateCustomerInformation(doc, result)
                     generateInvoiceTable(doc, result);
+                    // see the range of buffered pages
+                    const range = doc.bufferedPageRange(); // => { start: 0, count: 2 }
+                    //set page numbering
+                    for (i = range.start, end = range.start + range.count, range.start <= end; i < end; i++) {
+                        doc.switchToPage(i);
+                        doc.fontSize(8)
+                        doc.text(`Page ${i + 1} of ${range.count}`, 50,
+                            710,
+                            { align: "center", width: 500 });
+                    }
+                   //set userName 
+                    for (i = range.start, end = range.start + range.count, range.start <= end; i < end; i++) {
+                        doc.switchToPage(i);
+                        doc.text(`Invoice Created By: ${result[0].userName}`, 50,
+                            700,
+                            { align: "center", width: 500 });
+                    }
+                    // manually flush pages that have been buffered
+                    doc.flushPages();
                     //doc.pipe(res)
                     //console.log(res)
                     doc.end();
@@ -286,7 +307,7 @@ exports.print_invoice = (req, res, next) => {
                         .text(
                             "Payment is due within 15 days. Thank you for your business.",
                             50,
-                            700,
+                            685,
                             { align: "center", width: 500 }
                         );
                 }
@@ -331,8 +352,9 @@ exports.print_invoice = (req, res, next) => {
                             .fontSize(10)
                             .font("Helvetica-Bold")
                             .text(`Invoice Number: ${data.invoiceNumber}`, 50, 200)
-                            .text(`Invoice Date: ${moment(data.date).format('MM/DD/YYYY')}`, 50, 215)
+                            .text(`Invoice Date: ${moment(data.date).format('DD/MM/YYYY')}`, 50, 215)
                             .text(`Total Value: ${getSubTotal(result)}${getCurrency(result)}`, 50, 230)
+                            .text(`Created By: ${data.userName}`, 50, 245)
                             .text(`${companyName}`, 350, 200)
                             .font("Helvetica")
                             .text(`${no},${lane}`, 350, 215)
