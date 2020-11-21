@@ -1,32 +1,32 @@
-const PurchaseOrders = require('../../models/purchaseOrders/purchaseOrders');
+const PurchaseOrdersRaw = require('../../models/purchaseOrders/purchaseOrdersRaw');
 const mongoose = require('mongoose');
 const _ = require('lodash');
 const moment = require('moment');
-const Supplier = require('../../models/master/SupplierMaster');
+//const Supplier = require('../../models/master/SupplierMaster');
 //Add new purchase order
-exports.purchase_order_add_new = (req, res, next) => {
+exports.purchase_order_raw_add_new = (req, res, next) => {
     console.log(req.body)
-    const purchaseOrders = new PurchaseOrders({
+    const purchaseOrdersRaw = new PurchaseOrdersRaw({
         id: mongoose.Types.ObjectId(),
         supplierId: req.body.supplierId,
         userId: req.body.userId,
         rawMaterials: req.body.rawMaterials,
         packingMaterials: req.body.packingMaterials
     });
-    purchaseOrders.save()
+    purchaseOrdersRaw.save()
         .then(result => {
             console.log(result);
         })
         .catch(err => console.log(err));
     res.status(200).json({
         //message: 'New Raw Material successfully created.',
-        purchaseOrders: purchaseOrders
+        purchaseOrdersRaw: purchaseOrdersRaw
     });
 }
 //Get all raw materials
-exports.purchase_orders_get_all = (req, res, next) => {
+exports.purchase_orders_raw_get_all = (req, res, next) => {
     //PurchaseOrders.find()
-    PurchaseOrders.aggregate(
+    PurchaseOrdersRaw.aggregate(
         [{
             '$lookup': {
                 from: 'suppliermasters',
@@ -42,14 +42,6 @@ exports.purchase_orders_get_all = (req, res, next) => {
                 foreignField: 'id',
                 as: 'rawMaterialsList'
             }
-        },
-        {
-            '$lookup': {
-                from: 'packingmaterialmasters',
-                localField: 'packingMaterials.id',
-                foreignField: 'id',
-                as: 'packingMaterialsList'
-            }
         }
         ]
     )
@@ -64,10 +56,10 @@ exports.purchase_orders_get_all = (req, res, next) => {
             })
         });
 }
-exports.purchase_orders_get_one = (req, res, next) => {
+exports.purchase_orders_raw_get_one = (req, res, next) => {
 
     //PurchaseOrders.findById(req.params._id)
-    PurchaseOrders.aggregate(
+    PurchaseOrdersRaw.aggregate(
         [
             {
                 '$match': {
@@ -89,15 +81,8 @@ exports.purchase_orders_get_one = (req, res, next) => {
                     foreignField: 'id',
                     as: 'rawMaterialsList'
                 }
-            },
-            {
-                '$lookup': {
-                    from: 'packingmaterialmasters',
-                    localField: 'packingMaterials.id',
-                    foreignField: 'id',
-                    as: 'packingMaterialsList'
-                }
-            }]
+            }
+        ]
     )
         .exec()
         .then(doc => {
@@ -115,7 +100,7 @@ exports.purchase_orders_get_one = (req, res, next) => {
 }
 
 //Update purchase orders
-exports.update_purchase_order = (req, res, next) => {
+exports.update_purchase_order_raw = (req, res, next) => {
 
     const id = req.params.id;
     const updateOps = {};
@@ -123,10 +108,10 @@ exports.update_purchase_order = (req, res, next) => {
         updateOps[ops.propName] = ops.value;
     }
 
-    PurchaseOrders.update({ _id: req.params.id }, { $set: req.body })
+    PurchaseOrdersRaw.update({ _id: req.params.id }, { $set: req.body })
         .exec()
         .then(result => {
-            PurchaseOrders.findById(id)
+            PurchaseOrdersRaw.findById(id)
                 .then(docs => {
                     res.status(200).json(docs);
                 })
@@ -145,9 +130,9 @@ exports.update_purchase_order = (req, res, next) => {
         });
 }
 //Delete purchase orders
-exports.delete_purchase_order = (req, res, next) => {
+exports.delete_purchase_order_raw = (req, res, next) => {
     const id = req.params.id;
-    PurchaseOrders.remove({ _id: id })
+    PurchaseOrdersRaw.remove({ _id: id })
         .exec()
         .then(result => {
             res.status(200).json(result);
@@ -159,11 +144,11 @@ exports.delete_purchase_order = (req, res, next) => {
         });
 }
 //Search purchase orders
-exports.search_purchase_orders = (req, res, next) => {
+exports.search_purchase_orders_raw = (req, res, next) => {
     const startDate = moment(req.body.formValues.startDate).format('MM/DD/YYYY')
     const endDate = moment(req.body.formValues.endDate).format('MM/DD/YYYY')
     console.log("dates", startDate, " ", endDate)
-    PurchaseOrders.aggregate(
+    PurchaseOrdersRaw.aggregate(
         [
             {
                 '$lookup': {
@@ -182,17 +167,8 @@ exports.search_purchase_orders = (req, res, next) => {
                 }
             },
             {
-                '$lookup': {
-                    from: 'packingmaterialmasters',
-                    localField: 'packingMaterials.id',
-                    foreignField: 'id',
-                    as: 'searchPackingMaterial'
-                }
-            },
-            {
                 '$match': {
                     $or: [
-                        { "searchPackingMaterial.materialName": req.body.formValues.searchText },
                         { "searchRawMaterial.materialName": req.body.formValues.searchText },
                         { "searchSupplier.companyName": req.body.formValues.searchText },
                         {
@@ -204,7 +180,7 @@ exports.search_purchase_orders = (req, res, next) => {
                     ]
 
                 }
-            }           
+            }
         ])
         .then(result => {
             res.status(200).json(result);

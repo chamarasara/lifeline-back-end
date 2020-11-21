@@ -22,7 +22,8 @@ app.use('/api/master-data/semi-finish-good', require('./routes/api/masterdata/se
 app.use('/api/master-data/supplier-master', require('./routes/api/masterdata/supplierMaster'))
 app.use('/api/master-data/customer-master', require('./routes/api/masterdata/customerMaster'))
 app.use('/api/master-data/product-master', require('./routes/api/masterdata/productsMaster'))
-app.use('/api/sales/purchase-orders', require('./routes/api/sales/purchaseOrders'))
+app.use('/api/sales/purchase-orders-raw', require('./routes/api/sales/purchaseOrdersRaw'))
+app.use('/api/sales/purchase-orders-packing', require('./routes/api/sales/purchaseOrdersPacking'))
 app.use('/api/sales/invoices', require('./routes/api/sales/invoices'))
 
 
