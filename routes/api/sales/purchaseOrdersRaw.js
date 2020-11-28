@@ -16,5 +16,7 @@ router.patch('/update-purchase-order-raw/:id', PurchaseOrdersRawController.updat
 router.delete('/delete-purchase-order-raw/:id', PurchaseOrdersRawController.delete_purchase_order_raw);
 //Search
 router.post('/search-purchase-order-raw/', PurchaseOrdersRawController.search_purchase_orders_raw);
+//Print purchase order
+router.get('/print-purchase-order-raw/:id', PurchaseOrdersRawController.print_purchase_orders_raw);
 
 module.exports = router;

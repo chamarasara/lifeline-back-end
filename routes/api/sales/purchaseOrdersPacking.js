@@ -16,5 +16,6 @@ router.patch('/update-purchase-order-packing/:id', PurchaseOrdersPackingControll
 router.delete('/delete-purchase-order-packing/:id', PurchaseOrdersPackingController.delete_purchase_order_packing);
 //Search
 router.post('/search-purchase-order-packing/', PurchaseOrdersPackingController.search_purchase_orders_packing);
-
+//Print purchase order
+router.get('/print-purchase-order-packing/:id', PurchaseOrdersPackingController.print_purchase_orders_packing);
 module.exports = router;
