@@ -18,7 +18,7 @@ router.post('/new-supplier', [
         }
         console.log(req.body)
         const {
-            supplierName, mobileNo, fax, registerNo, division, email, companyName,state, currency, creditPeriod, 
+            supplierName, mobileNo1, mobileNo2, fax, registerNo, division, email, companyName,state, currency, creditPeriod, 
             communicationAddress: {
                 city, country, lane, no, postalCode
             },
@@ -29,7 +29,7 @@ router.post('/new-supplier', [
         const id = mongoose.Types.ObjectId()
         try {
             supplierMaster = new SupplierMaster({
-                supplierName,id, mobileNo, fax, registerNo, division, email, companyName, state, currency, creditPeriod, 
+                supplierName, id, mobileNo1, mobileNo2, fax, registerNo, division, email, companyName, state, currency, creditPeriod, 
                 communicationAddress: {
                     city, country, lane, no, postalCode
                 },

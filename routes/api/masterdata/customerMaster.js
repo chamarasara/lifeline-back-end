@@ -18,7 +18,7 @@ router.post('/new-customer', [
         }
         console.log(req.body)
         const {
-            customerName, mobileNo, fax, registerNo, division, email, companyName, state, currency, debitPeriod,
+            customerName, mobileNo1, mobileNo2, fax, registerNo, division, email, companyName, state, currency, debitPeriod,
             communicationAddress: {
                 city, country, lane, no, postalCode
             },
@@ -29,7 +29,7 @@ router.post('/new-customer', [
         const id = mongoose.Types.ObjectId()
         try {
             customerMaster = new CustomerMaster({
-                customerName,id, mobileNo, fax, registerNo, division, email, companyName, state, currency, debitPeriod,
+                customerName, id, mobileNo1, mobileNo2, fax, registerNo, division, email, companyName, state, currency, debitPeriod,
                 communicationAddress: {
                     city, country, lane, no, postalCode
                 },
