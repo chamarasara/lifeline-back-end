@@ -12,7 +12,8 @@ const InvoicesSchema = new mongoose.Schema({
     products: { type: Array },
     invoiceNumber: { type: Number },
     advancePayment: { type: Number },
-    payments: { type: Array }
+    paymentsAll: { type: Array },
+    
 },
     {
         timestamps: true
