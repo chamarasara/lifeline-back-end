@@ -24,7 +24,7 @@ exports.purchase_order_raw_add_new = (req, res, next) => {
         userName: req.body.user.user.userName,
         userRole: req.body.user.user.userRole,
         rawMaterials: req.body.rawMaterials,
-        order_state: "enabled",
+        order_state: "Pending",
         orderNumber: getOrderNumber()
     });
     purchaseOrdersRaw.save()

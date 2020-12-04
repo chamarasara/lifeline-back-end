@@ -22,7 +22,7 @@ exports.purchase_order_packing_add_new = (req, res, next) => {
         userId: req.body.userId,
         userName: req.body.user.user.userName,
         userRole: req.body.user.user.userRole,
-        order_state: "enabled",
+        order_state: "Pending",
         orderNumber: getOrderNumber(),
         packingMaterials: req.body.packingMaterials
     });
@@ -157,8 +157,8 @@ exports.delete_purchase_order_packing = (req, res, next) => {
 }
 //Search purchase orders
 exports.search_purchase_orders_packing = (req, res, next) => {
-    const startDate = moment(req.body.formValues.startDate).format('MM/DD/YYYY')
-    const endDate = moment(req.body.formValues.endDate).format('MM/DD/YYYY')
+    const startDate = moment(req.body.formValues.startDate).format('YYYY/MM/DD')
+    const endDate = moment(req.body.formValues.endDate).format('YYYY/MM/DD')
     console.log("dates", startDate, " ", endDate)
     PurchaseOrdersPacking.aggregate(
         [
