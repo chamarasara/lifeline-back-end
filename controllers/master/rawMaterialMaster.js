@@ -4,10 +4,16 @@ const mongoose = require('mongoose');
 //Add new rwa material 
 exports.raw_material_add_new = (req, res, next) => {
     console.log(req.body)
+    function getMaterialCode() {
+        for (var i = 0; i < 5; i++)
+            var date = new Date()
+        //return (moment(Date.now()).format('YYYY/MM') + ((Math.random() * 100000).toFixed()))
+        return"RM" + (Math.random() * 10000).toFixed()
+    }
     const rawMaterial = new RawMaterial({
         id: mongoose.Types.ObjectId(),
         materialName: req.body.materialName,
-        materialCode: req.body.materialCode,
+        materialCode: getMaterialCode(),
         materialGroup: req.body.materialGroup,
         baseUnitMeasure: req.body.baseUnitMeasure,
         materialState: req.body.materialState,
