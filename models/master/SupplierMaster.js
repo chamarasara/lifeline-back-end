@@ -26,8 +26,10 @@ const SupplierMasterSchema = new mongoose.Schema({
     },
     state: { type: String },
     currency: { type: String },
-    creditPeriod: { type: Number }
-
+    creditPeriod: { type: Number },
+    userId: { type: String },
+    userName: { type: String },
+    userRole: { type: String }
 },
     {
         timestamps: true

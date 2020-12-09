@@ -26,8 +26,10 @@ const CustomerMasterSchema = new mongoose.Schema({
     },
     state: { type: String },
     currency: { type: String },
-    debitPeriod: { type: Number }
-
+    debitPeriod: { type: Number },
+    userId: { type: String },
+    userName: { type: String },
+    userRole: { type: String }
 },
     {
         timestamps: true

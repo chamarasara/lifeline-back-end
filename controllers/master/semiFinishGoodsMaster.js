@@ -136,8 +136,10 @@ exports.semi_finish_good_add_new = (req, res, next) => {
                 stockDetermGroup: req.body.plantDataTwo.generalParameters.stockDetermGroup,
                 serLevel: req.body.plantDataTwo.generalParameters.serLevel
             }
-        }
-
+        },
+        userId: req.body.user.user.userId,
+        userName: req.body.user.user.userName,
+        userRole: req.body.user.user.userRole
     });
     semiFinishGoodMaster.save()
         .then(result => {

@@ -35,13 +35,13 @@ router.post('/login', [
             //check user exists
             let user = await User.findOne({ userName })
             if (!user) {
-                return res.status(400).json({ errors: [{ msg: 'Access denied. Please enter valid username & password' }] })
+                return res.status(400).json({ errors: [{ msg: 'Access denied. Please enter valid username' }] })
             }
             //check correct username and password
             const isMatch = await bcrypt.compare(password, user.password)
             if (!isMatch) {
                 return res.status(400).json(
-                    { errors: [{ msg: 'Access denied. Please enter valid username & password' }] }
+                    { errors: [{ msg: 'Access denied. Please enter valid password' }] }
                 )
             }
             const payload = {

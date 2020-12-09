@@ -12,10 +12,8 @@ exports.packing_material_add_new = (req, res, next) => {
     const packingMaterial = new PackingMaterial({
         materialName: req.body.materialName,
         id: mongoose.Types.ObjectId(),
-        materialCode: getMaterialCode(),
         materialGroup: req.body.materialGroup,
         baseUnitMeasure: req.body.baseUnitMeasure,
-        division: req.body.division,
         materialState: req.body.materialState,
         suppliers: req.body.suppliers,
         materialDescription: req.body.materialDescription,
@@ -122,8 +120,7 @@ exports.packing_material_add_new = (req, res, next) => {
                 timeUnit: req.body.plantDataOne.shelfLifeData.timeUnit,
                 minRemainigShelfLife: req.body.plantDataOne.shelfLifeData.minRemainigShelfLife,
                 totalShelfLife: req.body.plantDataOne.shelfLifeData.totalShelfLife,
-                periodForSled: req.body.plantDataOne.shelfLifeData.periodForSled,
-                storagePercentage: req.body.plantDataOne.shelfLifeData.storagePercentage
+                periodForSled: req.body.plantDataOne.shelfLifeData.periodForSled
             }
         },
         plantDataTwo: {
@@ -148,8 +145,10 @@ exports.packing_material_add_new = (req, res, next) => {
             //     stockDetermGroup: req.body.plantDataTwo.generalParameters.stockDetermGroup,
             //     serLevel: req.body.plantDataTwo.generalParameters.serLevel
             // }
-        }
-
+        },
+        userId: req.body.user.user.userId,
+        userName: req.body.user.user.userName,
+        userRole: req.body.user.user.userRole
     });
     packingMaterial.save()
         .then(result => {

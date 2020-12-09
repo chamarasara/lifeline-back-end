@@ -1,10 +1,11 @@
 const mongoose = require('mongoose')
+const AutoIncrement = require('mongoose-sequence')(mongoose);
 
 const PackingMaterialMasterSchema = new mongoose.Schema({
     date: { type: Date, default: Date.now },
     id: { type: String, require: true },
     materialName: { type: String, require: true },
-    materialCode: { type: String, require: true },
+    materialCodePm: { type: Number },
     materialGroup: { type: String, require: true },
     baseUnitMeasure: { type: String, require: true },
     oldMaterialNumber: { type: String },
@@ -110,8 +111,7 @@ const PackingMaterialMasterSchema = new mongoose.Schema({
             timeUnit: { type: String },
             minRemainigShelfLife: { type: String },
             totalShelfLife: { type: String },
-            periodForSled: { type: String },
-            storagePercentage: { type: String }
+            periodForSled: { type: String }
         }
     },
     plantDataTwo: {
@@ -128,10 +128,14 @@ const PackingMaterialMasterSchema = new mongoose.Schema({
             dimensionsW: { type: Number },
             dimensionsH: { type: Number }
         }
-    }
+    },
+    userId: { type: String },
+    userName: { type: String },
+    userRole: { type: String }
 },
     {
         timestamps: true
     }
 )
+PackingMaterialMasterSchema.plugin(AutoIncrement, { inc_field: 'materialCodePm', inc_amount: '1' });
 module.exports = PackingMaterialMaster = mongoose.model('PackingMaterialMaster', PackingMaterialMasterSchema)

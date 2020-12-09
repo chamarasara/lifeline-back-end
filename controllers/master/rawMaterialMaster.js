@@ -13,7 +13,6 @@ exports.raw_material_add_new = (req, res, next) => {
     const rawMaterial = new RawMaterial({
         id: mongoose.Types.ObjectId(),
         materialName: req.body.materialName,
-        materialCode: getMaterialCode(),
         materialGroup: req.body.materialGroup,
         baseUnitMeasure: req.body.baseUnitMeasure,
         materialState: req.body.materialState,
@@ -122,8 +121,7 @@ exports.raw_material_add_new = (req, res, next) => {
                 timeUnit: req.body.plantDataOne.shelfLifeData.timeUnit,
                 minRemainigShelfLife: req.body.plantDataOne.shelfLifeData.minRemainigShelfLife,
                 totalShelfLife: req.body.plantDataOne.shelfLifeData.totalShelfLife,
-                periodForSled: req.body.plantDataOne.shelfLifeData.periodForSled,
-                storagePercentage: req.body.plantDataOne.shelfLifeData.storagePercentage
+                periodForSled: req.body.plantDataOne.shelfLifeData.periodForSled
             }
         },
         plantDataTwo: {
@@ -148,8 +146,10 @@ exports.raw_material_add_new = (req, res, next) => {
             //     stockDetermGroup: req.body.plantDataTwo.generalParameters.stockDetermGroup,
             //     serLevel: req.body.plantDataTwo.generalParameters.serLevel
             // }
-        }
-
+        },
+        userId: req.body.user.user.userId,
+        userName: req.body.user.user.userName,
+        userRole: req.body.user.user.userRole
     });
     rawMaterial.save()
         .then(result => {
