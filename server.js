@@ -25,6 +25,7 @@ app.use('/api/master-data/product-master', require('./routes/api/masterdata/prod
 app.use('/api/sales/purchase-orders-raw', require('./routes/api/sales/purchaseOrdersRaw'))
 app.use('/api/sales/purchase-orders-packing', require('./routes/api/sales/purchaseOrdersPacking'))
 app.use('/api/sales/invoices', require('./routes/api/sales/invoices'))
+app.use('/api/master-data/bom', require('./routes/api/masterdata/bomMaster'))
 
 
 const PORT = process.env.PORT || 5000;

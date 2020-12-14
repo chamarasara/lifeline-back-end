@@ -37,7 +37,7 @@ exports.add_new_invoice = (req, res, next) => {
         invoices: invoices
     });
 }
-//Get all raw materials
+//Get all invoices
 exports.all_invoices = (req, res, next) => {
     Invoices.aggregate(
         [{
@@ -50,7 +50,7 @@ exports.all_invoices = (req, res, next) => {
         },
         {
             '$lookup': {
-                from: 'productmasters',
+                from: 'finishgoodsmasters',
                 localField: 'products.id',
                 foreignField: 'id',
                 as: 'productsList'
@@ -87,7 +87,7 @@ exports.single_invoice = (req, res, next) => {
             },
             {
                 '$lookup': {
-                    from: 'productmasters',
+                    from: 'finishgoodsmasters',
                     localField: 'products.id',
                     foreignField: 'id',
                     as: 'productsList'
@@ -172,7 +172,7 @@ exports.search_invoices = (req, res, next) => {
             },
             {
                 '$lookup': {
-                    from: 'productmasters',
+                    from: 'finishgoodsmasters',
                     localField: 'products.id',
                     foreignField: 'id',
                     as: 'searchProducts'
@@ -224,7 +224,7 @@ exports.print_invoice = (req, res, next) => {
             },
             {
                 '$lookup': {
-                    from: 'productmasters',
+                    from: 'finishgoodsmasters',
                     localField: 'products.id',
                     foreignField: 'id',
                     as: 'productsList'
@@ -292,7 +292,7 @@ exports.print_invoice = (req, res, next) => {
                         .image('controllers/sales/logo.png', 40, 40, { width: 100 })
                         .fillColor("#444444")
                         .fontSize(18)
-                        .text("Lifeguard Manufacturing (pvt)Ltd.", 155, 80)
+                        .text("Lifeguard Manufacturing (Pvt)Ltd.", 155, 80)
                         .fontSize(10)
                         .text("No:114/1/12,", 200, 65, { align: "right" })
                         .text("Maharagama Road,", 200, 80, { align: "right" })

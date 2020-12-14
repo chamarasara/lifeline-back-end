@@ -296,7 +296,7 @@ exports.print_purchase_orders_raw = (req, res, next) => {
                         .image('controllers/sales/logo.png', 40, 40, { width: 100 })
                         .fillColor("#444444")
                         .fontSize(18)
-                        .text("Lifeguard Manufacturing (PVT)Ltd.", 155, 80)
+                        .text("Lifeguard Manufacturing (Pvt)Ltd.", 155, 80)
                         .fontSize(10)
                         .text("No:114/1/12,", 200, 65, { align: "right" })
                         .text("Maharagama Road,", 200, 80, { align: "right" })
