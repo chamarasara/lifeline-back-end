@@ -380,12 +380,12 @@ exports.print_purchase_orders_raw = (req, res, next) => {
                         .stroke();
                 }
                 //generate table row
-                function generateTableRow(doc, y, productCode, productName, uom, quantity) {
+                function generateTableRow(doc, y, materialCodeRm, productName, uom, quantity) {
                     
                     doc
                         .font("Helvetica")
                         .fontSize(10)
-                        .text(productCode, 50, y)
+                        .text(materialCodeRm, 50, y)
                         .text(productName, 200, y)
                         .text(uom, 320, y, { width: 50, align: "right" })
                         .text(quantity, 470, y, { width: 50, align: "right" })                        
@@ -443,7 +443,7 @@ exports.print_purchase_orders_raw = (req, res, next) => {
                                 generateTableRow(
                                     doc,
                                     position,
-                                    product.materialCode,
+                                    `RM${product.materialCodeRm}`,
                                     product.materialName,
                                     quantity.uom,
                                     quantity.quantity                                    

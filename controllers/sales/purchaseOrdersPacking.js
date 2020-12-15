@@ -428,7 +428,7 @@ exports.print_purchase_orders_packing = (req, res, next) => {
                                 generateTableRow(
                                     doc,
                                     position,
-                                    product.materialCode,
+                                    `PM${product.materialCodePm}`,
                                     product.materialName,
                                     quantity.uom,
                                     quantity.quantity
