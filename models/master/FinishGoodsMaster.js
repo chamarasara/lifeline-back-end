@@ -12,6 +12,7 @@ const FinishGoodMasterSchema = new mongoose.Schema({
     barCode: { type: Number },
     barCodeImage: { type: String },
     productDescription: { type: String },
+    sellingPrice: { type: String },
     userId: { type: String },
     userName: { type: String },
     userRole: { type: String },
@@ -23,6 +24,6 @@ const FinishGoodMasterSchema = new mongoose.Schema({
     }
 )
 
-FinishGoodMasterSchema.plugin(AutoIncrement, {inc_field: 'productCode', inc_amount:'1' });
+FinishGoodMasterSchema.plugin(AutoIncrement, { inc_field: 'productCode', inc_amount: '1' });
 
 module.exports = FinishGoodsMaster = mongoose.model('FinishGoodsMaster', FinishGoodMasterSchema)

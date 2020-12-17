@@ -11,7 +11,7 @@ exports.finish_good_add_new = (req, res, next) => {
     }
     const finishGoodMaster = new FinishGoodMaster({
         id: mongoose.Types.ObjectId(),
-        productName: req.body.productName,     
+        productName: req.body.productName,
         productCategory: req.body.productCategory,
         baseUnitMeasure: req.body.baseUnitMeasure,
         division: req.body.division,
@@ -19,6 +19,7 @@ exports.finish_good_add_new = (req, res, next) => {
         barCode: req.body.barCode,
         barCodeImage: req.body.barCodeImage,
         productDescription: req.body.productDescription,
+        sellingPrice: req.body.sellingPrice,
         userId: req.body.user.user.userId,
         userName: req.body.user.user.userName,
         userRole: req.body.user.user.userRole,
