@@ -17,13 +17,6 @@ const CustomerMasterSchema = new mongoose.Schema({
         no: { type: String },
         postalCode: { type: String }
     },
-    registerAddress: {
-        city2: { type: String },
-        country2: { type: String },
-        lane2: { type: String },
-        no2: { type: String },
-        postalCode2: { type: String }
-    },
     state: { type: String },
     currency: { type: String },
     creditPeriod: { type: Number },

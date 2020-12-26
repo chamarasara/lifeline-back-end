@@ -21,9 +21,6 @@ router.post('/new-supplier', [
             supplierName, mobileNo1, mobileNo2, fax, registerNo, division, email, companyName, state, currency, creditPeriod, creditAmount,
             communicationAddress: {
                 city, country, lane, no, postalCode
-            },
-            registerAddress: {
-                city2, country2, lane2, no2, postalCode2
             }
         } = req.body
         const id = mongoose.Types.ObjectId()
@@ -32,9 +29,6 @@ router.post('/new-supplier', [
                 supplierName, id, mobileNo1, mobileNo2, fax, registerNo, division, email, companyName, state, currency, creditPeriod, creditAmount, 
                 communicationAddress: {
                     city, country, lane, no, postalCode
-                },
-                registerAddress: {
-                    city2, country2, lane2, no2, postalCode2
                 }
             })
             //save user role

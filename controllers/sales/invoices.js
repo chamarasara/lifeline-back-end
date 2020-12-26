@@ -3,7 +3,6 @@ const mongoose = require('mongoose');
 const moment = require('moment');
 const fs = require("fs");
 const PDFDocument = require("pdfkit");
-const blobStream = require('blob-stream');
 
 //Add new purchase order
 exports.add_new_invoice = (req, res, next) => {
@@ -380,9 +379,9 @@ exports.print_invoice = (req, res, next) => {
                     doc
                         .font("Helvetica")
                         .fontSize(10)
-                        .text(productCode, 50, y)
-                        .text(productName, 150, y)
-                        .text(uom, 280, y, { width: 50, align: "right" })
+                        .text(productCode, 50, y, { width: 50 })
+                        .text(productName, 150, y, { width: 150 })
+                        .text(uom, 280, y, { width: 40, align: "right" })
                         .text(quantity, 370, y, { width: 50, align: "right" })
                         .text(rate, 420, y, { width: 50, align: "right" })
                         .text(total, 0, y, { align: "right" });
@@ -423,8 +422,8 @@ exports.print_invoice = (req, res, next) => {
                         generateTableRow(
                             doc,
                             invoiceTableTop,
-                            "Product Code",
-                            "Product Name",
+                            "Code",
+                            "Name",
                             "UOM",
                             "Quantity",
                             "Rate",
@@ -440,14 +439,14 @@ exports.print_invoice = (req, res, next) => {
                                 generateTableRow(
                                     doc,
                                     position,
-                                    product.productCode,
+                                    `FG${product.productCode}`,
                                     product.productName,
                                     quantity.uom,
                                     quantity.quantity,
                                     quantity.rate,
                                     quantity.rate * quantity.quantity
                                 );
-                                generateHr(doc, position + 20);
+                                generateHr(doc, position + 23);
                             }
                         }
                         const subtotalPosition = invoiceTableTop + (i + 1) * 30;
@@ -461,7 +460,9 @@ exports.print_invoice = (req, res, next) => {
                             "Subtotal",
                             getSubTotal(result)
                         );
-
+                        const position = invoiceTableTop + (i + 1) * 30;
+                        generateHr(doc, position + 20);
+                        generateHr(doc, position + 22);
                     })
                 }
             } else {

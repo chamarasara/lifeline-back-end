@@ -17,24 +17,20 @@ router.post('/new-customer', [
             return res.status(400).json({ errors: errors.array() })
         }
         console.log(req.body)
+        
         const {
             customerName, mobileNo1, mobileNo2, fax, registerNo, division, email, companyName, state, currency, creditPeriod, creditAmount,
             communicationAddress: {
                 city, country, lane, no, postalCode
-            },
-            registerAddress: {
-                city2, country2, lane2, no2, postalCode2
-            }
+            }            
         } = req.body
         const id = mongoose.Types.ObjectId()
+        const defult = "defult"
         try {
             customerMaster = new CustomerMaster({
                 customerName, id, mobileNo1, mobileNo2, fax, registerNo, division, email, companyName, state, currency, creditPeriod, creditAmount,
                 communicationAddress: {
                     city, country, lane, no, postalCode
-                },
-                registerAddress: {
-                    city2, country2, lane2, no2, postalCode2
                 }
             })
             //save user role
