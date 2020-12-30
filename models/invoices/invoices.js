@@ -4,6 +4,7 @@ const InvoicesSchema = new mongoose.Schema({
     date: { type: Date, default: Date.now },
     id: { type: String, require: true },
     customerId: { type: String, require: true },
+    quotationNumber: { type: String },
     userId: { type: String },
     userName: { type: String },
     userRole: { type: String },

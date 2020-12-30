@@ -19,6 +19,7 @@ exports.add_new_invoice = (req, res, next) => {
     const invoices = new Invoices({
         id: mongoose.Types.ObjectId(),
         customerId: req.body.customerId,
+        quotationNumber: req.body.quotationNumber,
         userId: req.body.user.user.userId,
         userName: req.body.user.user.userName,
         userRole: req.body.user.user.userRole,
@@ -140,7 +141,7 @@ exports.update_invoice = (req, res, next) => {
             });
         });
 }
-//Delete raw material
+//Delete invoice
 exports.delete_invoice = (req, res, next) => {
     const id = req.params.id;
     Invoices.remove({ _id: id })
@@ -271,7 +272,7 @@ exports.print_invoice = (req, res, next) => {
                             710,
                             { align: "center", width: 500 });
                     }
-                   //set userName 
+                    //set userName 
                     for (i = range.start, end = range.start + range.count, range.start <= end; i < end; i++) {
                         doc.switchToPage(i);
                         doc.text(`Invoice Created By: ${result[0].userName}`, 50,
