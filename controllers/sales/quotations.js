@@ -372,7 +372,7 @@ exports.print_quotation = (req, res, next) => {
                             .font("Helvetica-Bold")
                             .text(`Quotation Number: ${data.quotationNumber}`, 50, 200)
                             .text(`Quotation Date: ${moment(data.date).format('DD/MM/YYYY')}`, 50, 215)
-                            //.text(`Total Value: ${getSubTotal(result)}${getCurrency(result)}`, 50, 230)
+                            .text(`Total Value: ${getSubTotal(result)} ${getCurrency(result)}`, 50, 230)
                             .text(`Created By: ${data.userName}`, 50, 245)
                             .text(`${companyName}`, 350, 200)
                             .font("Helvetica")
@@ -422,22 +422,19 @@ exports.print_quotation = (req, res, next) => {
                             console.log("rate", data.sellingPrice)
                             return data.sellingPrice
                         })
-                        let totalValue = ""
-                        for (let index = 0; index < quantities.length; index++) {
-                            const q = quantities => quantities.map(Number)
-                            const q1 = q(quantities)
-                            console.log(q1[index])
-                            const r = rates => rates.map(Number)
-                            const r1 = r(rates)
-                            console.log(r1[index])
-                            totalValue += q1[index] * r1[index]
-                            console.log(quantities[index])
-                            console.log(rates[index])
-                            console.log(totalValue)
+                        let totalValue = []
+                        for (let i = 0; i < Math.min(quantities.length, rates.length, discounts.length); i++) {
+                            let quantity = quantities[i]
+                            let discount = discounts[i]
+                            let rate = rates[i]
+                            totalValue[i] = (quantity * rate) / 100 * (100 - discount);
+                            
+                            console.log(totalValue, "Total Value")
                         }
-                        console.log(totalValue, "total")
+                        
                         const total = totalValue.reduce((a, b) => (a + b))
-                        return total
+                        console.log(totalValue.reduce((a, b) => a + b, 0), "total")
+                        return total.toFixed(2)
                     })
                     return getTotal
                 }
@@ -506,8 +503,9 @@ exports.print_quotation = (req, res, next) => {
                             "",
                             "",
                             "",
+                            "",
                             "Subtotal",
-                            //getSubTotal(result)
+                            getSubTotal(result)
                         );
                         const position = quotationTableTop + (i + 1) * 30;
                         generateHr(doc, position + 20);
