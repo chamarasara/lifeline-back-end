@@ -24,7 +24,6 @@ exports.add_new_invoice = (req, res, next) => {
         userName: req.body.user.user.userName,
         userRole: req.body.user.user.userRole,
         invoice_state: "enabled",
-        products: req.body.products,
         invoiceNumber: getInvoiceNumber()
     });
     invoices.save()
@@ -40,22 +39,32 @@ exports.add_new_invoice = (req, res, next) => {
 //Get all invoices
 exports.all_invoices = (req, res, next) => {
     Invoices.aggregate(
-        [{
-            '$lookup': {
-                from: 'customermasters',
-                localField: 'customerId',
-                foreignField: 'id',
-                as: 'customer'
+        [
+            {
+                '$lookup': {
+                    from: 'quotations',
+                    localField: 'quotationNumber',
+                    foreignField: 'quotationNumber',
+                    as: 'quotationDetails'
+                }
+            },
+            {
+                '$lookup': {
+                    from: 'finishgoodsmasters',
+                    localField: 'quotationDetails.products.id',
+                    foreignField: 'id',
+                    as: 'productsDetails'
+                }
+            },
+            {
+                '$lookup': {
+                    from: 'customermasters',
+                    localField: 'customerId',
+                    foreignField: 'id',
+                    as: 'customer'
+                }
             }
-        },
-        {
-            '$lookup': {
-                from: 'finishgoodsmasters',
-                localField: 'products.id',
-                foreignField: 'id',
-                as: 'productsList'
-            }
-        }]
+        ]
     )
         .exec()
         .then(docs => {
@@ -79,18 +88,26 @@ exports.single_invoice = (req, res, next) => {
             },
             {
                 '$lookup': {
-                    from: 'customermasters',
-                    localField: 'customerId',
-                    foreignField: 'id',
-                    as: 'customer'
+                    from: 'quotations',
+                    localField: 'quotationNumber',
+                    foreignField: 'quotationNumber',
+                    as: 'quotationDetails'
                 }
             },
             {
                 '$lookup': {
                     from: 'finishgoodsmasters',
-                    localField: 'products.id',
+                    localField: 'quotationDetails.products.id',
                     foreignField: 'id',
-                    as: 'productsList'
+                    as: 'productsDetails'
+                }
+            },
+            {
+                '$lookup': {
+                    from: 'customermasters',
+                    localField: 'customerId',
+                    foreignField: 'id',
+                    as: 'customer'
                 }
             }]
     )
@@ -164,18 +181,26 @@ exports.search_invoices = (req, res, next) => {
         [
             {
                 '$lookup': {
-                    from: 'customermasters',
-                    localField: 'customerId',
-                    foreignField: 'id',
-                    as: 'searchCustomer'
+                    from: 'quotations',
+                    localField: 'quotationNumber',
+                    foreignField: 'quotationNumber',
+                    as: 'quotationDetails'
                 }
             },
             {
                 '$lookup': {
                     from: 'finishgoodsmasters',
-                    localField: 'products.id',
+                    localField: 'quotationDetails.products.id',
                     foreignField: 'id',
                     as: 'searchProducts'
+                }
+            },
+            {
+                '$lookup': {
+                    from: 'customermasters',
+                    localField: 'customerId',
+                    foreignField: 'id',
+                    as: 'searchCustomer'
                 }
             },
             {
@@ -193,7 +218,8 @@ exports.search_invoices = (req, res, next) => {
 
                 }
             }
-        ])
+        ]
+    )
         .then(result => {
             res.status(200).json(result);
         })
