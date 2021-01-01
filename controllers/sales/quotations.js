@@ -336,8 +336,8 @@ exports.print_quotation = (req, res, next) => {
                         const companyName = data.customerDetails.map(customer => {
                             return customer.companyName
                         })
-                        const mobileNo = data.customerDetails.map(customer => {
-                            return customer.mobileNo
+                        const mobileNo1 = data.customerDetails.map(customer => {
+                            return customer.mobileNo1
                         })
                         const email = data.customerDetails.map(customer => {
                             return customer.email
@@ -379,7 +379,7 @@ exports.print_quotation = (req, res, next) => {
                             .text(`${no},${lane}`, 350, 215)
                             .text(`${city}, ${country}, ${postalCode}`, 350, 230)
                             .text(`${email}`, 350, 245)
-                            .text(`${mobileNo}`, 350, 260)
+                            .text(`${mobileNo1}`, 350, 260)
                             .moveDown();
 
                         generateHr(doc, 277);

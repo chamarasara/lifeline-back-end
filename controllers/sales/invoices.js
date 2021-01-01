@@ -24,6 +24,7 @@ exports.add_new_invoice = (req, res, next) => {
         userName: req.body.user.user.userName,
         userRole: req.body.user.user.userRole,
         invoice_state: "enabled",
+        products: req.body.products,
         invoiceNumber: getInvoiceNumber()
     });
     invoices.save()
@@ -39,19 +40,11 @@ exports.add_new_invoice = (req, res, next) => {
 //Get all invoices
 exports.all_invoices = (req, res, next) => {
     Invoices.aggregate(
-        [
-            {
-                '$lookup': {
-                    from: 'quotations',
-                    localField: 'quotationNumber',
-                    foreignField: 'quotationNumber',
-                    as: 'quotationDetails'
-                }
-            },
+        [            
             {
                 '$lookup': {
                     from: 'finishgoodsmasters',
-                    localField: 'quotationDetails.products.id',
+                    localField: 'products.id',
                     foreignField: 'id',
                     as: 'productsDetails'
                 }
@@ -88,16 +81,8 @@ exports.single_invoice = (req, res, next) => {
             },
             {
                 '$lookup': {
-                    from: 'quotations',
-                    localField: 'quotationNumber',
-                    foreignField: 'quotationNumber',
-                    as: 'quotationDetails'
-                }
-            },
-            {
-                '$lookup': {
                     from: 'finishgoodsmasters',
-                    localField: 'quotationDetails.products.id',
+                    localField: 'products.id',
                     foreignField: 'id',
                     as: 'productsDetails'
                 }
@@ -178,19 +163,11 @@ exports.search_invoices = (req, res, next) => {
     const startDate = moment(req.body.formValues.startDate).format('MM/DD/YYYY')
     const endDate = moment(req.body.formValues.endDate).format('MM/DD/YYYY')
     Invoices.aggregate(
-        [
-            {
-                '$lookup': {
-                    from: 'quotations',
-                    localField: 'quotationNumber',
-                    foreignField: 'quotationNumber',
-                    as: 'quotationDetails'
-                }
-            },
+        [        
             {
                 '$lookup': {
                     from: 'finishgoodsmasters',
-                    localField: 'quotationDetails.products.id',
+                    localField: 'products.id',
                     foreignField: 'id',
                     as: 'searchProducts'
                 }
@@ -343,8 +320,8 @@ exports.print_invoice = (req, res, next) => {
                         const companyName = data.customer.map(customer => {
                             return customer.companyName
                         })
-                        const mobileNo = data.customer.map(customer => {
-                            return customer.mobileNo
+                        const mobileNo1 = data.customer.map(customer => {
+                            return customer.mobileNo1
                         })
                         const email = data.customer.map(customer => {
                             return customer.email
@@ -386,7 +363,7 @@ exports.print_invoice = (req, res, next) => {
                             .text(`${no},${lane}`, 350, 215)
                             .text(`${city}, ${country}, ${postalCode}`, 350, 230)
                             .text(`${email}`, 350, 245)
-                            .text(`${mobileNo}`, 350, 260)
+                            .text(`${mobileNo1}`, 350, 260)
                             .moveDown();
 
                         generateHr(doc, 277);
@@ -402,25 +379,46 @@ exports.print_invoice = (req, res, next) => {
                         .stroke();
                 }
                 //generate table row
-                function generateTableRow(doc, y, productCode, productName, uom, quantity, rate, total) {
+                function generateTableRow(doc, y, productCode, productName, uom, quantity, rate, discount, total) {
                     doc
                         .font("Helvetica")
                         .fontSize(10)
                         .text(productCode, 50, y, { width: 50 })
-                        .text(productName, 150, y, { width: 150 })
-                        .text(uom, 280, y, { width: 40, align: "right" })
-                        .text(quantity, 370, y, { width: 50, align: "right" })
-                        .text(rate, 420, y, { width: 50, align: "right" })
+                        .text(productName, 90, y, { width: 180 })
+                        .text(uom, 270, y, { width: 40, align: "right" })
+                        .text(quantity, 300, y, { width: 60, align: "right" })
+                        .text(rate, 350, y, { width: 50, align: "right" })
+                        .text(discount, 400, y, { width: 50, align: "right" })
                         .text(total, 0, y, { align: "right" });
                 }
                 function getSubTotal(result) {
-
+                    console.log(result)
                     const getTotal = result.map(data => {
                         const quantities = data.products.map(data => {
-                            return data.quantity * data.rate
+                            console.log("quantity", data.quantity)
+                            return data.quantity
                         })
-                        const total = quantities.reduce((a, b) => (a + b))
-                        return total
+                        const discounts = data.products.map(data => {
+                            console.log("discount", data.discount)
+                            return data.discount
+                        })
+                        const rates = data.productsList.map(data => {
+                            console.log("rate", data.sellingPrice)
+                            return data.sellingPrice
+                        })
+                        let totalValue = []
+                        for (let i = 0; i < Math.min(quantities.length, rates.length, discounts.length); i++) {
+                            let quantity = quantities[i]
+                            let discount = discounts[i]
+                            let rate = rates[i]
+                            totalValue[i] = (quantity * rate) / 100 * (100 - discount);
+
+                            console.log(totalValue, "Total Value")
+                        }
+
+                        const total = totalValue.reduce((a, b) => (a + b))
+                        console.log(totalValue.reduce((a, b) => a + b, 0), "total")
+                        return total.toFixed(2)
                     })
                     return getTotal
                 }
@@ -453,7 +451,8 @@ exports.print_invoice = (req, res, next) => {
                             "Name",
                             "UOM",
                             "Quantity",
-                            "Rate",
+                            "Rate",                            
+                            "Discount",                                   
                             "Total"
                         );
                         generateHr(doc, invoiceTableTop + 20);
@@ -463,23 +462,30 @@ exports.print_invoice = (req, res, next) => {
                                 const product = products[i];
                                 const quantity = quantities[i]
                                 const position = invoiceTableTop + (i + 1) * 30;
+                                let totalValue = product.sellingPrice * quantity.quantity
+                                let discount = (100 - quantity.discount) / 100
+                                let discountValue = totalValue * discount
+                                let rate = product.sellingPrice
                                 generateTableRow(
                                     doc,
                                     position,
                                     `FG${product.productCode}`,
                                     product.productName,
-                                    quantity.uom,
+                                    product.baseUnitMeasure,
                                     quantity.quantity,
-                                    quantity.rate,
-                                    quantity.rate * quantity.quantity
+                                    rate,
+                                    `${quantity.discount}%`,
+                                    discountValue.toFixed(2)
                                 );
                                 generateHr(doc, position + 23);
+
                             }
                         }
                         const subtotalPosition = invoiceTableTop + (i + 1) * 30;
                         generateTableRow(
                             doc,
                             subtotalPosition,
+                            "",
                             "",
                             "",
                             "",

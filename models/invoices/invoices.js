@@ -10,6 +10,7 @@ const InvoicesSchema = new mongoose.Schema({
     userRole: { type: String },
     invoice_state: { type: String },
     disable_reason: { type: String },
+    products: { type: Array },
     invoiceNumber: { type: Number },
     advancePayment: { type: Number },
     paymentsAll: { type: Array },
