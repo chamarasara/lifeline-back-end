@@ -11,7 +11,7 @@ const InvoicesSchema = new mongoose.Schema({
     invoice_state: { type: String },
     disable_reason: { type: String },
     products: { type: Array },
-    invoiceNumber: { type: Number },
+    invoiceNumber: { type: String },
     advancePayment: { type: Number },
     paymentsAll: { type: Array },
     

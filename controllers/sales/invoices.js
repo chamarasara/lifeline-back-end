@@ -1,4 +1,5 @@
 const Invoices = require('../../models/invoices/invoices');
+const Count = require('../../models/counter/count');
 const mongoose = require('mongoose');
 const moment = require('moment');
 const fs = require("fs");
@@ -6,46 +7,68 @@ const PDFDocument = require("pdfkit");
 
 //Add new purchase order
 exports.add_new_invoice = (req, res, next) => {
-    //generate invoice number
-    function getInvoiceNumber() {
-        for (var i = 0; i < 5; i++)
-            var date = new Date()
-        const year = date.getFullYear()
-        const month = date.getMonth() + 1
-        console.log(year.toString() + month.toString() + (Math.random() * 100000).toFixed())
-        //return (moment(Date.now()).format('YYYY/MM') + ((Math.random() * 100000).toFixed()))
-        return year.toString() + month.toString() + (Math.random() * 100000).toFixed()
-    }
-    const invoices = new Invoices({
-        id: mongoose.Types.ObjectId(),
-        customerId: req.body.customerId,
-        quotationNumber: req.body.quotationNumber,
-        userId: req.body.user.user.userId,
-        userName: req.body.user.user.userName,
-        userRole: req.body.user.user.userRole,
-        invoice_state: "enabled",
-        products: req.body.products,
-        invoiceNumber: getInvoiceNumber()
-    });
-    invoices.save()
-        .then(result => {
-            console.log(result);
-        })
-        .catch(err => console.log(err));
-    res.status(200).json({
-        //message: 'New Raw Material successfully created.',
-        invoices: invoices
-    });
+    console.log(req.body, "Invoice")
+    Count.findOneAndUpdate({ id: 'invoiceNo' }, { $inc: { seq: 1 } }, { "new": true }, (error, doc) => {
+
+        if (doc) {
+            //generate invoice number
+            function getInvoiceNumber() {
+                for (var i = 0; i < 5; i++)
+                    var date = new Date()
+                const year = date.getFullYear()
+                const month = date.getMonth() + 1
+                //console.log("IN" + year.toString() + month.toString() + doc.seq)
+                //return (moment(Date.now()).format('YYYY/MM') + ((Math.random() * 100000).toFixed()))
+                return "IN" + year.toString() + month.toString() + doc.seq
+            }
+
+            const invoices = new Invoices({
+                id: mongoose.Types.ObjectId(),
+                customerId: req.body.customerId,
+                quotationNumber: req.body.quotationNumber,
+                userId: req.body.user.user.userId,
+                userName: req.body.user.user.userName,
+                userRole: req.body.user.user.userRole,
+                invoice_state: "enabled",
+                products: req.body.products,
+                invoiceNumber: getInvoiceNumber()
+            });
+            invoices.save()
+                .then(result => {
+                    console.log(result);
+                })
+                .catch(err => console.log(err));
+            res.status(200).json({
+                //message: 'New Raw Material successfully created.',
+                invoices: invoices
+            });
+        }
+    })
 }
 //Get all invoices
 exports.all_invoices = (req, res, next) => {
     Invoices.aggregate(
-        [            
+        [
             {
                 '$lookup': {
                     from: 'finishgoodsmasters',
-                    localField: 'products.id',
-                    foreignField: 'id',
+                    let: { productId: "$products.id" },
+                    pipeline: [
+                        {
+                            $match: {
+                                "$expr": { "$in": ["$id", "$$productId"] }
+                            }
+                        },
+                        {
+                            "$addFields": {
+                                "sort": {
+                                    "$indexOfArray": ["$$productId", "$id"]
+                                }
+                            }
+                        },
+                        { "$sort": { "sort": 1 } },
+                        { "$addFields": { "sort": "$$REMOVE" } }
+                    ],
                     as: 'productsDetails'
                 }
             },
@@ -82,8 +105,23 @@ exports.single_invoice = (req, res, next) => {
             {
                 '$lookup': {
                     from: 'finishgoodsmasters',
-                    localField: 'products.id',
-                    foreignField: 'id',
+                    let: { productId: "$products.id" },
+                    pipeline: [
+                        {
+                            $match: {
+                                "$expr": { "$in": ["$id", "$$productId"] }
+                            }
+                        },
+                        {
+                            "$addFields": {
+                                "sort": {
+                                    "$indexOfArray": ["$$productId", "$id"]
+                                }
+                            }
+                        },
+                        { "$sort": { "sort": 1 } },
+                        { "$addFields": { "sort": "$$REMOVE" } }
+                    ],
                     as: 'productsDetails'
                 }
             },
@@ -94,7 +132,8 @@ exports.single_invoice = (req, res, next) => {
                     foreignField: 'id',
                     as: 'customer'
                 }
-            }]
+            }
+        ]
     )
         .exec()
         .then(doc => {
@@ -163,7 +202,7 @@ exports.search_invoices = (req, res, next) => {
     const startDate = moment(req.body.formValues.startDate).format('MM/DD/YYYY')
     const endDate = moment(req.body.formValues.endDate).format('MM/DD/YYYY')
     Invoices.aggregate(
-        [        
+        [
             {
                 '$lookup': {
                     from: 'finishgoodsmasters',
@@ -228,8 +267,23 @@ exports.print_invoice = (req, res, next) => {
             {
                 '$lookup': {
                     from: 'finishgoodsmasters',
-                    localField: 'products.id',
-                    foreignField: 'id',
+                    let: { productId: "$products.id" },
+                    pipeline: [
+                        {
+                            $match: {
+                                "$expr": { "$in": ["$id", "$$productId"] }
+                            }
+                        },
+                        {
+                            "$addFields": {
+                                "sort": {
+                                    "$indexOfArray": ["$$productId", "$id"]
+                                }
+                            }
+                        },
+                        { "$sort": { "sort": 1 } },
+                        { "$addFields": { "sort": "$$REMOVE" } }
+                    ],
                     as: 'productsList'
                 }
             }]
@@ -295,7 +349,7 @@ exports.print_invoice = (req, res, next) => {
                         .image('controllers/sales/logo.png', 40, 40, { width: 100 })
                         .fillColor("#444444")
                         .fontSize(18)
-                        .text("Lifeguard Manufacturing (Pvt)Ltd.", 155, 80)
+                        .text("Lifeguard Manufacturing (Pvt) Ltd.", 155, 80)
                         .fontSize(10)
                         .text("No:114/1/12,", 200, 65, { align: "right" })
                         .text("Maharagama Road,", 200, 80, { align: "right" })
@@ -344,6 +398,10 @@ exports.print_invoice = (req, res, next) => {
                         const postalCode = address.map(postalCode => {
                             return postalCode.postalCode2
                         })
+                        const creditPeriod = data.customer.map(creditPeriod => {
+                            console.log("credit period", creditPeriod.creditPeriod)
+                            return creditPeriod.creditPeriod
+                        })
                         doc
                             .fillColor("#444444")
                             .fontSize(15)
@@ -356,8 +414,9 @@ exports.print_invoice = (req, res, next) => {
                             .font("Helvetica-Bold")
                             .text(`Invoice Number: ${data.invoiceNumber}`, 50, 200)
                             .text(`Invoice Date: ${moment(data.date).format('DD/MM/YYYY')}`, 50, 215)
-                            .text(`Total Value: ${getSubTotal(result)}${getCurrency(result)}`, 50, 230)
-                            .text(`Created By: ${data.userName}`, 50, 245)
+                            .text(`Due Date: ${moment(data.date).add('d', creditPeriod).format('DD/MM/YYYY')}`, 50, 230)
+                            .text(`Total Value: ${getSubTotal(result)}${getCurrency(result)}`, 50, 245)
+                            .text(`Created By: ${data.userName}`, 50, 260)
                             .text(`${companyName}`, 350, 200)
                             .font("Helvetica")
                             .text(`${no},${lane}`, 350, 215)
@@ -391,6 +450,9 @@ exports.print_invoice = (req, res, next) => {
                         .text(discount, 400, y, { width: 50, align: "right" })
                         .text(total, 0, y, { align: "right" });
                 }
+                function formatNumber(num) {
+                    return num.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,")
+                }
                 function getSubTotal(result) {
                     console.log(result)
                     const getTotal = result.map(data => {
@@ -418,7 +480,7 @@ exports.print_invoice = (req, res, next) => {
 
                         const total = totalValue.reduce((a, b) => (a + b))
                         console.log(totalValue.reduce((a, b) => a + b, 0), "total")
-                        return total.toFixed(2)
+                        return formatNumber(total.toFixed(2))
                     })
                     return getTotal
                 }
@@ -451,8 +513,8 @@ exports.print_invoice = (req, res, next) => {
                             "Name",
                             "UOM",
                             "Quantity",
-                            "Rate",                            
-                            "Discount",                                   
+                            "Rate",
+                            "Discount",
                             "Total"
                         );
                         generateHr(doc, invoiceTableTop + 20);
@@ -475,7 +537,7 @@ exports.print_invoice = (req, res, next) => {
                                     quantity.quantity,
                                     rate,
                                     `${quantity.discount}%`,
-                                    discountValue.toFixed(2)
+                                    formatNumber(discountValue.toFixed(2))
                                 );
                                 generateHr(doc, position + 23);
 

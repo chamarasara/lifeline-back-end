@@ -7,8 +7,9 @@ const PDFDocument = require("pdfkit");
 
 //Add new quotations
 exports.add_new_quotation = (req, res, next) => {
-
+    
     Count.findOneAndUpdate({ id: 'quotationNo' }, { $inc: { seq: 1 } }, { "new": true }, (error, doc) => {
+        console.log(doc)
         // error: any errors that occurred
         // doc: the document before updates are applied if `new: false`, or after updates if `new = true`
         if (doc) {
@@ -428,10 +429,10 @@ exports.print_quotation = (req, res, next) => {
                             let discount = discounts[i]
                             let rate = rates[i]
                             totalValue[i] = (quantity * rate) / 100 * (100 - discount);
-                            
+
                             console.log(totalValue, "Total Value")
                         }
-                        
+
                         const total = totalValue.reduce((a, b) => (a + b))
                         console.log(totalValue.reduce((a, b) => a + b, 0), "total")
                         return total.toFixed(2)
