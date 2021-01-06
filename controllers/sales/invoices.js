@@ -202,38 +202,52 @@ exports.search_invoices = (req, res, next) => {
     const startDate = moment(req.body.formValues.startDate).format('MM/DD/YYYY')
     const endDate = moment(req.body.formValues.endDate).format('MM/DD/YYYY')
     Invoices.aggregate(
-        [
-            {
-                '$lookup': {
-                    from: 'finishgoodsmasters',
-                    localField: 'products.id',
-                    foreignField: 'id',
-                    as: 'searchProducts'
-                }
-            },
-            {
-                '$lookup': {
-                    from: 'customermasters',
-                    localField: 'customerId',
-                    foreignField: 'id',
-                    as: 'searchCustomer'
-                }
-            },
-            {
-                '$match': {
-                    $or: [
-                        { "searchProducts.productName": req.body.formValues.searchText },
-                        { "searchCustomer.customerName": req.body.formValues.searchText },
-                        {
-                            date: {
-                                $gte: new Date(startDate),
-                                $lte: new Date(endDate)
+        [{
+            '$lookup': {
+                from: 'finishgoodsmasters',
+                let: { productId: "$products.id" },
+                pipeline: [
+                    {
+                        $match: {
+                            "$expr": { "$in": ["$id", "$$productId"] }
+                        }
+                    },
+                    {
+                        "$addFields": {
+                            "sort": {
+                                "$indexOfArray": ["$$productId", "$id"]
                             }
                         }
-                    ]
-
-                }
+                    },
+                    { "$sort": { "sort": 1 } },
+                    { "$addFields": { "sort": "$$REMOVE" } }
+                ],
+                as: 'searchProducts'
             }
+        },        
+        {
+            '$lookup': {
+                from: 'customermasters',
+                localField: 'customerId',
+                foreignField: 'id',
+                as: 'searchCustomer'
+            }
+        },
+        {
+            '$match': {
+                $or: [
+                    { "searchProducts.productName": req.body.formValues.searchText },
+                    { "searchCustomer.customerName": req.body.formValues.searchText },
+                    {
+                        date: {
+                            $gte: new Date(startDate),
+                            $lte: new Date(endDate)
+                        }
+                    }
+                ]
+
+            }
+        }
         ]
     )
         .then(result => {
