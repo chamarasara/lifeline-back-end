@@ -7,7 +7,7 @@ const PDFDocument = require("pdfkit");
 
 //Add new quotations
 exports.add_new_quotation = (req, res, next) => {
-    
+
     Count.findOneAndUpdate({ id: 'quotationNo' }, { $inc: { seq: 1 } }, { "new": true }, (error, doc) => {
         console.log(doc)
         // error: any errors that occurred
@@ -19,11 +19,11 @@ exports.add_new_quotation = (req, res, next) => {
                     var date = new Date()
                 const year = date.getFullYear()
                 const month = date.getMonth() + 1
-                console.log("Q" + year.toString() + month.toString() + doc.seq)
+                //console.log("Q" + year.toString() + month.toString() + doc.seq)
                 //return (moment(Date.now()).format('YYYY/MM') + ((Math.random() * 100000).toFixed()))
                 return "Q" + year.toString() + month.toString() + doc.seq
             }
-            console.log(req.body, "Quotations")
+            //console.log(req.body, "Quotations")
             const quotations = new Quotations({
                 id: mongoose.Types.ObjectId(),
                 customerId: req.body.customerId,
@@ -36,7 +36,7 @@ exports.add_new_quotation = (req, res, next) => {
             });
             quotations.save()
                 .then(result => {
-                    console.log(result);
+                    //console.log(result);
                 })
                 .catch(err => console.log(err));
             res.status(200).json({
@@ -63,6 +63,29 @@ exports.all_quotations = (req, res, next) => {
         [{
             '$lookup': {
                 from: 'finishgoodsmasters',
+                let: { productId: "$productId" },
+                pipeline: [
+                    {
+                        $match: {
+                            "$expr": { "$in": ["$id", "$$productId"] }
+                        }
+                    },
+                    {
+                        "$addFields": {
+                            "sort": {
+                                "$indexOfArray": ["$$productId", "$id"]
+                            }
+                        }
+                    },
+                    { "$sort": { "sort": 1 } },
+                    { "$addFields": { "sort": "$$REMOVE" } }
+                ],
+                as: 'product'
+            }
+        },
+        {
+            '$lookup': {
+                from: 'finishgoodsmasters',
                 localField: 'productId',
                 foreignField: 'id',
                 as: 'product'
@@ -80,7 +103,7 @@ exports.all_quotations = (req, res, next) => {
     )
         .exec()
         .then(docs => {
-            console.log(docs);
+            //console.log(docs);
             res.status(200).json(docs);
         })
         .catch(err => {
@@ -101,25 +124,41 @@ exports.single_quotation = (req, res, next) => {
             },
             {
                 '$lookup': {
+                    from: 'finishgoodsmasters',
+                    let: { productId: "$products.id" },
+                    pipeline: [
+                        {
+                            $match: {
+                                "$expr": { "$in": ["$id", "$$productId"] }
+                            }
+                        },
+                        {
+                            "$addFields": {
+                                "sort": {
+                                    "$indexOfArray": ["$$productId", "$id"]
+                                }
+                            }
+                        },
+                        { "$sort": { "sort": 1 } },
+                        { "$addFields": { "sort": "$$REMOVE" } }
+                    ],
+                    as: 'productsList'
+                }
+            },
+            {
+                '$lookup': {
                     from: 'customermasters',
                     localField: 'customerId',
                     foreignField: 'id',
                     as: 'customerDetails'
                 }
-            },
-            {
-                '$lookup': {
-                    from: 'finishgoodsmasters',
-                    localField: 'products.id',
-                    foreignField: 'id',
-                    as: 'productsList'
-                }
-            }]
+            }            
+        ]
     )
         .exec()
         .then(doc => {
             if (doc) {
-                console.log("doccccc", doc)
+                //console.log("doccccc", doc)
                 res.status(200).json(doc);
             } else {
                 res.status(404).json({ message: "No valid ID found" })
@@ -135,7 +174,6 @@ exports.single_quotation = (req, res, next) => {
 exports.update_quotation = (req, res, next) => {
 
     const id = req.params.id;
-    console.log(id)
     const updateOps = {};
     for (const ops in req.body) {
         updateOps[ops.propName] = ops.value;
@@ -149,14 +187,14 @@ exports.update_quotation = (req, res, next) => {
                     res.status(200).json(docs);
                 })
                 .catch(err => {
-                    console.log(err)
+                    //console.log(err)
                     res.status(500).json({
                         error: err
                     });
                 });
         })
         .catch(err => {
-            console.log(err)
+           // console.log(err)
             res.status(500).json({
                 error: err
             });
@@ -178,11 +216,34 @@ exports.delete_quotation = (req, res, next) => {
 }
 //Search quotations
 exports.search_quotations = (req, res, next) => {
-    console.log(req.body.formValues)
+    //console.log(req.body.formValues)
     const startDate = moment(req.body.formValues.startDate).format('YYYY/MM/DD')
     const endDate = moment(req.body.formValues.endDate).format('YYYY/MM/DD')
     Quotations.aggregate(
         [
+            {
+                '$lookup': {
+                    from: 'finishgoodsmasters',
+                    let: { productId: "$products.id" },
+                    pipeline: [
+                        {
+                            $match: {
+                                "$expr": { "$in": ["$id", "$$productId"] }
+                            }
+                        },
+                        {
+                            "$addFields": {
+                                "sort": {
+                                    "$indexOfArray": ["$$productId", "$id"]
+                                }
+                            }
+                        },
+                        { "$sort": { "sort": 1 } },
+                        { "$addFields": { "sort": "$$REMOVE" } }
+                    ],
+                    as: 'productsList'
+                }
+            },
             {
                 '$lookup': {
                     from: 'customermasters',
@@ -191,14 +252,14 @@ exports.search_quotations = (req, res, next) => {
                     as: 'customerDetails'
                 }
             },
-            {
-                '$lookup': {
-                    from: 'finishgoodsmasters',
-                    localField: 'products.id',
-                    foreignField: 'id',
-                    as: 'productsList'
-                }
-            },
+            // {
+            //     '$lookup': {
+            //         from: 'finishgoodsmasters',
+            //         localField: 'products.id',
+            //         foreignField: 'id',
+            //         as: 'productsList'
+            //     }
+            // },
             {
                 '$match': {
                     $or: [
@@ -245,17 +306,33 @@ exports.print_quotation = (req, res, next) => {
             {
                 '$lookup': {
                     from: 'finishgoodsmasters',
-                    localField: 'products.id',
-                    foreignField: 'id',
+                    let: { productId: "$products.id" },
+                    pipeline: [
+                        {
+                            $match: {
+                                "$expr": { "$in": ["$id", "$$productId"] }
+                            }
+                        },
+                        {
+                            "$addFields": {
+                                "sort": {
+                                    "$indexOfArray": ["$$productId", "$id"]
+                                }
+                            }
+                        },
+                        { "$sort": { "sort": 1 } },
+                        { "$addFields": { "sort": "$$REMOVE" } }
+                    ],
                     as: 'productsList'
                 }
-            }]
+            }
+        ]
     )
         .exec()
         .then(result => {
             const data = result
             if (result) {
-                console.log("doccccc", result)
+                //console.log("doccccc", result)
 
                 createQuotaion(result, "./quotation.pdf")
                 //generate empty pdf
@@ -409,18 +486,18 @@ exports.print_quotation = (req, res, next) => {
                         .text(total, 0, y, { align: "right" });
                 }
                 function getSubTotal(result) {
-                    console.log(result)
+                    //console.log(result)
                     const getTotal = result.map(data => {
                         const quantities = data.products.map(data => {
-                            console.log("quantity", data.quantity)
+                            //console.log("quantity", data.quantity)
                             return data.quantity
                         })
                         const discounts = data.products.map(data => {
-                            console.log("discount", data.discount)
+                            //console.log("discount", data.discount)
                             return data.discount
                         })
                         const rates = data.productsList.map(data => {
-                            console.log("rate", data.sellingPrice)
+                            //console.log("rate", data.sellingPrice)
                             return data.sellingPrice
                         })
                         let totalValue = []
@@ -430,11 +507,11 @@ exports.print_quotation = (req, res, next) => {
                             let rate = rates[i]
                             totalValue[i] = (quantity * rate) / 100 * (100 - discount);
 
-                            console.log(totalValue, "Total Value")
+                            //console.log(totalValue, "Total Value")
                         }
 
                         const total = totalValue.reduce((a, b) => (a + b))
-                        console.log(totalValue.reduce((a, b) => a + b, 0), "total")
+                        //console.log(totalValue.reduce((a, b) => a + b, 0), "total")
                         return total.toFixed(2)
                     })
                     return getTotal
