@@ -60,45 +60,23 @@ exports.add_new_quotation = (req, res, next) => {
 //Get all quotations
 exports.all_quotations = (req, res, next) => {
     Quotations.aggregate(
-        [{
-            '$lookup': {
-                from: 'finishgoodsmasters',
-                let: { productId: "$productId" },
-                pipeline: [
-                    {
-                        $match: {
-                            "$expr": { "$in": ["$id", "$$productId"] }
-                        }
-                    },
-                    {
-                        "$addFields": {
-                            "sort": {
-                                "$indexOfArray": ["$$productId", "$id"]
-                            }
-                        }
-                    },
-                    { "$sort": { "sort": 1 } },
-                    { "$addFields": { "sort": "$$REMOVE" } }
-                ],
-                as: 'product'
+        [
+            {
+                '$lookup': {
+                    from: 'finishgoodsmasters',
+                    localField: 'productId',
+                    foreignField: 'id',
+                    as: 'product'
+                }
+            },
+            {
+                '$lookup': {
+                    from: 'customermasters',
+                    localField: 'customerId',
+                    foreignField: 'id',
+                    as: 'customerDetails'
+                }
             }
-        },
-        {
-            '$lookup': {
-                from: 'finishgoodsmasters',
-                localField: 'productId',
-                foreignField: 'id',
-                as: 'product'
-            }
-        },
-        {
-            '$lookup': {
-                from: 'customermasters',
-                localField: 'customerId',
-                foreignField: 'id',
-                as: 'customerDetails'
-            }
-        }
         ]
     )
         .exec()
@@ -152,7 +130,7 @@ exports.single_quotation = (req, res, next) => {
                     foreignField: 'id',
                     as: 'customerDetails'
                 }
-            }            
+            }
         ]
     )
         .exec()
@@ -194,7 +172,7 @@ exports.update_quotation = (req, res, next) => {
                 });
         })
         .catch(err => {
-           // console.log(err)
+            // console.log(err)
             res.status(500).json({
                 error: err
             });
@@ -337,6 +315,7 @@ exports.print_quotation = (req, res, next) => {
                 createQuotaion(result, "./quotation.pdf")
                 //generate empty pdf
                 function createQuotaion(result, path) {
+                    console.log(result,"Full result")
                     let i;
                     let end;
                     let doc = new PDFDocument({ bufferPages: true });
@@ -381,6 +360,7 @@ exports.print_quotation = (req, res, next) => {
                     //doc.pipe(res)
                     //console.log(res)
                     doc.end();
+                    //
 
                 }
                 //generate pdf header
@@ -389,7 +369,7 @@ exports.print_quotation = (req, res, next) => {
                         .image('controllers/sales/logo.png', 40, 40, { width: 100 })
                         .fillColor("#444444")
                         .fontSize(18)
-                        .text("Lifeguard Manufacturing (Pvt)Ltd.", 155, 80)
+                        .text("Lifeguard Manufacturing (Pvt) Ltd.", 155, 80)
                         .fontSize(10)
                         .text("No:114/1/12,", 200, 65, { align: "right" })
                         .text("Maharagama Road,", 200, 80, { align: "right" })
@@ -411,32 +391,35 @@ exports.print_quotation = (req, res, next) => {
                 //generate customer information
                 function generateCustomerInformation(doc, result) {
                     const results = result.map(data => {
-                        const companyName = data.customerDetails.map(customer => {
+                        console.log(data.customerDetails)
+                        const companyName = data.customerDetails.map(customer => {                         
                             return customer.companyName
                         })
                         const mobileNo1 = data.customerDetails.map(customer => {
+                         
                             return customer.mobileNo1
                         })
                         const email = data.customerDetails.map(customer => {
                             return customer.email
                         })
-                        const address = data.customerDetails.map(address => {
-                            return address.registerAddress
+                        const address = data.customerDetails.map(address => {                           
+                            return address.communicationAddress
                         })
                         const no = address.map(no => {
-                            return no.no2
+                            console.log(no.no)
+                            return no.no
                         })
                         const lane = address.map(lane => {
-                            return lane.lane2
+                            return lane.lane
                         })
                         const city = address.map(city => {
-                            return city.city2
+                            return city.city
                         })
                         const country = address.map(country => {
-                            return country.country2
+                            return country.country
                         })
                         const postalCode = address.map(postalCode => {
-                            return postalCode.postalCode2
+                            return postalCode.postalCode
                         })
                         doc
                             .fillColor("#444444")
@@ -489,7 +472,7 @@ exports.print_quotation = (req, res, next) => {
                     //console.log(result)
                     const getTotal = result.map(data => {
                         const quantities = data.products.map(data => {
-                            //console.log("quantity", data.quantity)
+                            console.log("quantity", data.quantity)
                             return data.quantity
                         })
                         const discounts = data.products.map(data => {

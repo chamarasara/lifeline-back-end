@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 const _ = require('lodash');
 const moment = require('moment');
 const PDFDocument = require("pdfkit");
+const multer = require('multer');  
+
 //const Supplier = require('../../models/master/SupplierMaster');
 //Add new purchase order
 exports.purchase_order_raw_add_new = (req, res, next) => {

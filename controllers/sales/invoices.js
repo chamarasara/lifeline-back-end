@@ -7,7 +7,7 @@ const PDFDocument = require("pdfkit");
 
 //Add new purchase order
 exports.add_new_invoice = (req, res, next) => {
-    console.log(req.body, "Invoice")
+    
     Count.findOneAndUpdate({ id: 'invoiceNo' }, { $inc: { seq: 1 } }, { "new": true }, (error, doc) => {
 
         if (doc) {
@@ -35,7 +35,7 @@ exports.add_new_invoice = (req, res, next) => {
             });
             invoices.save()
                 .then(result => {
-                    console.log(result);
+                    //console.log(result);
                 })
                 .catch(err => console.log(err));
             res.status(200).json({
@@ -84,7 +84,6 @@ exports.all_invoices = (req, res, next) => {
     )
         .exec()
         .then(docs => {
-            console.log(docs);
             res.status(200).json(docs);
         })
         .catch(err => {
@@ -138,7 +137,6 @@ exports.single_invoice = (req, res, next) => {
         .exec()
         .then(doc => {
             if (doc) {
-                console.log("doccccc", doc)
                 res.status(200).json(doc);
             } else {
                 res.status(404).json({ message: "No valid ID found" })
@@ -155,7 +153,6 @@ exports.single_invoice = (req, res, next) => {
 exports.update_invoice = (req, res, next) => {
 
     const id = req.params.id;
-    console.log(id)
     const updateOps = {};
     for (const ops in req.body) {
         updateOps[ops.propName] = ops.value;
@@ -169,14 +166,14 @@ exports.update_invoice = (req, res, next) => {
                     res.status(200).json(docs);
                 })
                 .catch(err => {
-                    console.log(err)
+                    //console.log(err)
                     res.status(500).json({
                         error: err
                     });
                 });
         })
         .catch(err => {
-            console.log(err)
+            //console.log(err)
             res.status(500).json({
                 error: err
             });
@@ -198,7 +195,7 @@ exports.delete_invoice = (req, res, next) => {
 }
 //Search invoices
 exports.search_invoices = (req, res, next) => {
-    console.log(req.body)
+ 
     const startDate = moment(req.body.formValues.startDate).format('MM/DD/YYYY')
     const endDate = moment(req.body.formValues.endDate).format('MM/DD/YYYY')
     Invoices.aggregate(
@@ -305,12 +302,12 @@ exports.print_invoice = (req, res, next) => {
         .exec()
         .then(result => {
             const data = result
-            if (result) {
-                console.log("doccccc", result)
+            if (result) {                
 
                 createInvoice(result, "./invoice.pdf")
                 //generate empty pdf
                 function createInvoice(result, path) {
+                    console.log(result.products)
                     let i;
                     let end;
                     let doc = new PDFDocument({ bufferPages: true });
@@ -395,25 +392,25 @@ exports.print_invoice = (req, res, next) => {
                             return customer.email
                         })
                         const address = data.customer.map(address => {
-                            return address.registerAddress
+                            return address.communicationAddress
                         })
                         const no = address.map(no => {
-                            return no.no2
+                            return no.no
                         })
                         const lane = address.map(lane => {
-                            return lane.lane2
+                            return lane.lane
                         })
                         const city = address.map(city => {
-                            return city.city2
+                            return city.city
                         })
                         const country = address.map(country => {
-                            return country.country2
+                            return country.country
                         })
                         const postalCode = address.map(postalCode => {
-                            return postalCode.postalCode2
+                            return postalCode.postalCode
                         })
                         const creditPeriod = data.customer.map(creditPeriod => {
-                            console.log("credit period", creditPeriod.creditPeriod)
+                            //console.log("credit period", creditPeriod.creditPeriod)
                             return creditPeriod.creditPeriod
                         })
                         doc
@@ -471,15 +468,15 @@ exports.print_invoice = (req, res, next) => {
                     console.log(result)
                     const getTotal = result.map(data => {
                         const quantities = data.products.map(data => {
-                            console.log("quantity", data.quantity)
+                            //console.log("quantity", data.quantity)
                             return data.quantity
                         })
                         const discounts = data.products.map(data => {
-                            console.log("discount", data.discount)
+                            //console.log("discount", data.discount)
                             return data.discount
                         })
                         const rates = data.productsList.map(data => {
-                            console.log("rate", data.sellingPrice)
+                            //console.log("rate", data.sellingPrice)
                             return data.sellingPrice
                         })
                         let totalValue = []
@@ -489,11 +486,11 @@ exports.print_invoice = (req, res, next) => {
                             let rate = rates[i]
                             totalValue[i] = (quantity * rate) / 100 * (100 - discount);
 
-                            console.log(totalValue, "Total Value")
+                            //console.log(totalValue, "Total Value")
                         }
 
                         const total = totalValue.reduce((a, b) => (a + b))
-                        console.log(totalValue.reduce((a, b) => a + b, 0), "total")
+                        //console.log(totalValue.reduce((a, b) => a + b, 0), "total")
                         return formatNumber(total.toFixed(2))
                     })
                     return getTotal

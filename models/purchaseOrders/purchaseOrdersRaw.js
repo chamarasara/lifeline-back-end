@@ -10,7 +10,8 @@ const PurchaseOrdersRawSchema = new mongoose.Schema({
     rawMaterials: { type: Array },
     userId: { type: String },
     userName: { type: String },
-    userRole: { type: String } 
+    userRole: { type: String },
+    images: { type: Array }
 },
     {
         timestamps: true

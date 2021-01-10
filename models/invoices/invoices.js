@@ -14,6 +14,7 @@ const InvoicesSchema = new mongoose.Schema({
     invoiceNumber: { type: String },
     advancePayment: { type: Number },
     paymentsAll: { type: Array },
+    productsDetails: { type: String }
     
 },
     {
