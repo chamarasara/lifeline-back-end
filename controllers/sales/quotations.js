@@ -351,7 +351,7 @@ exports.print_quotation = (req, res, next) => {
                     //set userName 
                     for (i = range.start, end = range.start + range.count, range.start <= end; i < end; i++) {
                         doc.switchToPage(i);
-                        doc.text(`Invoice Created By: ${result[0].userName}`, 50,
+                        doc.text(`Quotation Created By: ${result[0].userName}`, 50,
                             700,
                             { align: "center", width: 500 });
                     }
@@ -468,6 +468,9 @@ exports.print_quotation = (req, res, next) => {
                         .text(discount, 400, y, { width: 50, align: "right" })
                         .text(total, 0, y, { align: "right" });
                 }
+                function formatNumber(num) {
+                    return num.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,")
+                }
                 function getSubTotal(result) {
                     //console.log(result)
                     const getTotal = result.map(data => {
@@ -495,7 +498,7 @@ exports.print_quotation = (req, res, next) => {
 
                         const total = totalValue.reduce((a, b) => (a + b))
                         //console.log(totalValue.reduce((a, b) => a + b, 0), "total")
-                        return total.toFixed(2)
+                        return formatNumber(total.toFixed(2))
                     })
                     return getTotal
                 }
@@ -551,7 +554,7 @@ exports.print_quotation = (req, res, next) => {
                                     quantity.quantity,
                                     rate,
                                     `${quantity.discount}%`,
-                                    discountValue.toFixed(2)
+                                    formatNumber(discountValue.toFixed(2))
                                 );
                                 generateHr(doc, position + 23);
                             }
