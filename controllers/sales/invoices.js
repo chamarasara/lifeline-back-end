@@ -259,7 +259,7 @@ exports.search_invoices = (req, res, next) => {
             '$match': {
                 $or: [
                     { "searchProducts.productName": req.body.formValues.searchText },
-                    { "searchCustomer.customerName": req.body.formValues.searchText },
+                    { "searchCustomer.companyName": req.body.formValues.searchText },
                     {
                         date: {
                             $gte: new Date(startDate),
