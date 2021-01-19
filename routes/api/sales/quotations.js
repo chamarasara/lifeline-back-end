@@ -10,6 +10,8 @@ router.post('/new-quotation', QuotationsController.add_new_quotation);
 router.get('/all-quotations', QuotationsController.all_quotations);
 //Get single purchase order
 router.get('/single-quotation/:id', QuotationsController.single_quotation);
+//get single quotation for invoices
+router.get('/single-quotation-invoice/:quotationNumber', QuotationsController.single_quotation_invoice);
 //Update purchase order
 router.patch('/update-quotation/:id', QuotationsController.update_quotation);
 //Delete purchase order

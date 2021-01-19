@@ -5,6 +5,7 @@ const InvoicesSchema = new mongoose.Schema({
     id: { type: String, require: true },
     customerId: { type: String, require: true },
     quotationNumber: { type: String },
+    remarks: { type: String },
     userId: { type: String },
     userName: { type: String },
     userRole: { type: String },
@@ -13,8 +14,7 @@ const InvoicesSchema = new mongoose.Schema({
     products: { type: Array },
     invoiceNumber: { type: String },
     advancePayment: { type: Number },
-    paymentsAll: { type: Array },
-    productsDetails: { type: String }
+    paymentsAll: { type: Array }
     
 },
     {

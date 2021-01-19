@@ -148,6 +148,64 @@ exports.single_quotation = (req, res, next) => {
             });
         })
 }
+//GEt single quotation for invoices
+exports.single_quotation_invoice = (req, res, next) => {
+
+    Quotations.aggregate(
+        [
+            {
+                '$match': {
+                    quotationNumber: req.params.quotationNumber
+                }
+            },
+            {
+                '$lookup': {
+                    from: 'finishgoodsmasters',
+                    let: { productId: "$products.id" },
+                    pipeline: [
+                        {
+                            $match: {
+                                "$expr": { "$in": ["$id", "$$productId"] }
+                            }
+                        },
+                        {
+                            "$addFields": {
+                                "sort": {
+                                    "$indexOfArray": ["$$productId", "$id"]
+                                }
+                            }
+                        },
+                        { "$sort": { "sort": 1 } },
+                        { "$addFields": { "sort": "$$REMOVE" } }
+                    ],
+                    as: 'productsList'
+                }
+            },
+            {
+                '$lookup': {
+                    from: 'customermasters',
+                    localField: 'customerId',
+                    foreignField: 'id',
+                    as: 'customerDetails'
+                }
+            }
+        ]
+    )
+        .exec()
+        .then(doc => {
+            if (doc) {
+                //console.log("doccccc", doc)
+                res.status(200).json(doc);
+            } else {
+                res.status(404).json({ message: "No valid ID found" })
+            }
+        })
+        .catch(err => {
+            res.status(500).json({
+                error: err
+            });
+        })
+}
 //Update quotation
 exports.update_quotation = (req, res, next) => {
 

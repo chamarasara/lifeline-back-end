@@ -7,7 +7,7 @@ const PDFDocument = require("pdfkit");
 
 //Add new purchase order
 exports.add_new_invoice = (req, res, next) => {
-    
+
     Count.findOneAndUpdate({ id: 'invoiceNo' }, { $inc: { seq: 1 } }, { "new": true }, (error, doc) => {
 
         if (doc) {
@@ -26,6 +26,7 @@ exports.add_new_invoice = (req, res, next) => {
                 id: mongoose.Types.ObjectId(),
                 customerId: req.body.customerId,
                 quotationNumber: req.body.quotationNumber,
+                remarks: req.body.remarks,
                 userId: req.body.user.user.userId,
                 userName: req.body.user.user.userName,
                 userRole: req.body.user.user.userRole,
@@ -79,6 +80,14 @@ exports.all_invoices = (req, res, next) => {
                     foreignField: 'id',
                     as: 'customer'
                 }
+            },
+            {
+                '$lookup': {
+                    from: 'quotations',
+                    localField: 'quotationNumber',
+                    foreignField: 'id',
+                    as: 'quotation'
+                }
             }
         ]
     )
@@ -131,7 +140,15 @@ exports.single_invoice = (req, res, next) => {
                     foreignField: 'id',
                     as: 'customer'
                 }
-            }
+            },
+            {
+                '$lookup': {
+                    from: 'quotations',
+                    localField: 'quotationNumber',
+                    foreignField: 'id',
+                    as: 'quotation'
+                }
+            },
         ]
     )
         .exec()
@@ -151,7 +168,7 @@ exports.single_invoice = (req, res, next) => {
 
 //Update raw material
 exports.update_invoice = (req, res, next) => {
-
+    console.log(req.body)
     const id = req.params.id;
     const updateOps = {};
     for (const ops in req.body) {
@@ -195,7 +212,7 @@ exports.delete_invoice = (req, res, next) => {
 }
 //Search invoices
 exports.search_invoices = (req, res, next) => {
- 
+
     const startDate = moment(req.body.formValues.startDate).format('MM/DD/YYYY')
     const endDate = moment(req.body.formValues.endDate).format('MM/DD/YYYY')
     Invoices.aggregate(
@@ -221,13 +238,21 @@ exports.search_invoices = (req, res, next) => {
                 ],
                 as: 'searchProducts'
             }
-        },        
+        },
         {
             '$lookup': {
                 from: 'customermasters',
                 localField: 'customerId',
                 foreignField: 'id',
                 as: 'searchCustomer'
+            }
+        },
+        {
+            '$lookup': {
+                from: 'quotations',
+                localField: 'quotationNumber',
+                foreignField: 'id',
+                as: 'quotation'
             }
         },
         {
@@ -277,6 +302,14 @@ exports.print_invoice = (req, res, next) => {
             },
             {
                 '$lookup': {
+                    from: 'quotations',
+                    localField: 'quotationNumber',
+                    foreignField: 'id',
+                    as: 'quotation'
+                }
+            },
+            {
+                '$lookup': {
                     from: 'finishgoodsmasters',
                     let: { productId: "$products.id" },
                     pipeline: [
@@ -302,7 +335,7 @@ exports.print_invoice = (req, res, next) => {
         .exec()
         .then(result => {
             const data = result
-            if (result) {                
+            if (result) {
 
                 createInvoice(result, "./invoice.pdf")
                 //generate empty pdf
@@ -335,16 +368,16 @@ exports.print_invoice = (req, res, next) => {
                     //set page numbering
                     for (i = range.start, end = range.start + range.count, range.start <= end; i < end; i++) {
                         doc.switchToPage(i);
-                        doc.fontSize(8)
+                        doc.fontSize(10)
                         doc.text(`Page ${i + 1} of ${range.count}`, 50,
-                            710,
+                            700,
                             { align: "center", width: 500 });
                     }
                     //set userName 
                     for (i = range.start, end = range.start + range.count, range.start <= end; i < end; i++) {
                         doc.switchToPage(i);
-                        doc.text(`Invoice Created By: ${result[0].userName}`, 50,
-                            700,
+                        doc.text(`Cheques to be written in favour of "Lifeguard Manufacturing (Pvt) Ltd"`, 50,
+                            685,
                             { align: "center", width: 500 });
                     }
                     // manually flush pages that have been buffered
@@ -409,6 +442,9 @@ exports.print_invoice = (req, res, next) => {
                         const postalCode = address.map(postalCode => {
                             return postalCode.postalCode
                         })
+                        const quotationNumber = data.quotation.map(quotation => {
+                            return quotation.quotationNumber
+                        })
                         const creditPeriod = data.customer.map(creditPeriod => {
                             //console.log("credit period", creditPeriod.creditPeriod)
                             return creditPeriod.creditPeriod
@@ -424,10 +460,11 @@ exports.print_invoice = (req, res, next) => {
                             .fontSize(10)
                             .font("Helvetica-Bold")
                             .text(`Invoice Number: ${data.invoiceNumber}`, 50, 200)
-                            .text(`Invoice Date: ${moment(data.date).format('DD/MM/YYYY')}`, 50, 215)
-                            .text(`Due Date: ${moment(data.date).add('d', creditPeriod).format('DD/MM/YYYY')}`, 50, 230)
-                            .text(`Total Value: ${getSubTotal(result)}${getCurrency(result)}`, 50, 245)
-                            .text(`Created By: ${data.userName}`, 50, 260)
+                            .text(`Quotation Number: ${quotationNumber}`, 50, 215)
+                            .text(`Invoice Date: ${moment(data.date).format('DD/MM/YYYY')}`, 50, 230)
+                            .text(`Due Date: ${moment(data.date).add('d', creditPeriod).format('DD/MM/YYYY')}`, 50, 245)
+                            .text(`Total Value: ${getSubTotal(result)}${getCurrency(result)}`, 50, 260)
+                            .text(`Created By: ${data.userName}`, 50, 275)
                             .text(`${companyName}`, 350, 200)
                             .font("Helvetica")
                             .text(`${no},${lane}`, 350, 215)
@@ -436,7 +473,7 @@ exports.print_invoice = (req, res, next) => {
                             .text(`${mobileNo1}`, 350, 260)
                             .moveDown();
 
-                        generateHr(doc, 277);
+                        generateHr(doc, 295);
                     })
 
                 }
