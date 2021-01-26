@@ -401,7 +401,8 @@ exports.print_quotation = (req, res, next) => {
                     //set page numbering
                     for (i = range.start, end = range.start + range.count, range.start <= end; i < end; i++) {
                         doc.switchToPage(i);
-                        doc.fontSize(8)
+                        doc.font("Helvetica")
+                        doc.fontSize(7)
                         doc.text(`Page ${i + 1} of ${range.count}`, 50,
                             710,
                             { align: "center", width: 500 });
@@ -409,8 +410,13 @@ exports.print_quotation = (req, res, next) => {
                     //set userName 
                     for (i = range.start, end = range.start + range.count, range.start <= end; i < end; i++) {
                         doc.switchToPage(i);
-                        doc.text(`Quotation Created By: ${result[0].userName}`, 50,
-                            700,
+                        doc.font("Helvetica")
+                        doc.fontSize(8)
+                        doc.text(`Cheques to be written in favour of "Lifeguard Manufacturing (Pvt) Ltd"`, 50,
+                            680,
+                            { align: "center", width: 500 });
+                        doc.text(`This is system generate document. No sign required"`, 50,
+                            695,
                             { align: "center", width: 500 });
                     }
                     // manually flush pages that have been buffered
@@ -427,7 +433,7 @@ exports.print_quotation = (req, res, next) => {
                         .image('controllers/sales/logo.png', 40, 40, { width: 100 })
                         .fillColor("#444444")
                         .fontSize(18)
-                        .text("Lifeguard Manufacturing (Pvt) Ltd.", 155, 80)
+                        .text("Lifeguard Manufacturing (Pvt) Ltd", 155, 80)
                         .fontSize(10)
                         .text("No:114/1/12,", 200, 65, { align: "right" })
                         .text("Maharagama Road,", 200, 80, { align: "right" })
@@ -463,6 +469,10 @@ exports.print_quotation = (req, res, next) => {
                         const address = data.customerDetails.map(address => {                           
                             return address.communicationAddress
                         })
+                        const creditPeriod = data.customerDetails.map(creditPeriod => {
+                            console.log("credit period", creditPeriod.creditPeriod)
+                            return creditPeriod.creditPeriod
+                        })
                         const no = address.map(no => {
                             console.log(no.no)
                             return no.no
@@ -491,8 +501,9 @@ exports.print_quotation = (req, res, next) => {
                             .font("Helvetica-Bold")
                             .text(`Quotation Number: ${data.quotationNumber}`, 50, 200)
                             .text(`Quotation Date: ${moment(data.date).format('DD/MM/YYYY')}`, 50, 215)
-                            .text(`Total Value: ${getSubTotal(result)} ${getCurrency(result)}`, 50, 230)
-                            .text(`Created By: ${data.userName}`, 50, 245)
+                            .text(`Valid Till: ${moment(data.date).add('d', 14).format('DD/MM/YYYY')}`, 50, 230)
+                            .text(`Credit Period: ${creditPeriod}`, 50, 245)
+                            .text(`Created By: ${data.userName}`, 50, 260)
                             .text(`${companyName}`, 350, 200)
                             .font("Helvetica")
                             .text(`${no},${lane}`, 350, 215)
@@ -517,13 +528,14 @@ exports.print_quotation = (req, res, next) => {
                 function generateTableRow(doc, y, productCode, productName, uom, quantity, rate, discount, total) {
                     doc
                         .font("Helvetica")
-                        .fontSize(10)
+                        .fontSize(9)
                         .text(productCode, 50, y, { width: 50 })
                         .text(productName, 90, y, { width: 180 })
                         .text(uom, 270, y, { width: 40, align: "right" })
                         .text(quantity, 300, y, { width: 60, align: "right" })
                         .text(rate, 350, y, { width: 50, align: "right" })
                         .text(discount, 400, y, { width: 50, align: "right" })
+                        .font("Helvetica-Bold")
                         .text(total, 0, y, { align: "right" });
                 }
                 function formatNumber(num) {
@@ -573,14 +585,14 @@ exports.print_quotation = (req, res, next) => {
                 function generateQuotationTable(doc, result) {
                     const productTable = result.map(data => {
                         let i,
-                            quotationTableTop = 330;
+                            quotationTableTop = 290;
                         const products = data.productsList.map(data => {
                             return data
                         })
                         const quantities = data.products.map(data => {
                             return data
                         })
-                        doc.font("Helvetica-Bold")
+                        doc.font("Helvetica")
                         generateTableRow(
                             doc,
                             quotationTableTop,

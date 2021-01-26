@@ -27,6 +27,7 @@ app.use('/api/sales/purchase-orders-packing', require('./routes/api/sales/purcha
 app.use('/api/sales/invoices', require('./routes/api/sales/invoices'))
 app.use('/api/sales/quotations', require('./routes/api/sales/quotations'))
 app.use('/api/master-data/bom', require('./routes/api/masterdata/bomMaster'))
+app.use('/api/inventory/finish-good', require('./routes/api/inventory/finishGood'))
 
 
 const PORT = process.env.PORT || 5000;
