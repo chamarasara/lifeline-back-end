@@ -3,42 +3,46 @@ const mongoose = require('mongoose');
 const _ = require('lodash');
 const moment = require('moment');
 const PDFDocument = require("pdfkit");
-const multer = require('multer');  
+const multer = require('multer');
 
 //const Supplier = require('../../models/master/SupplierMaster');
 //Add new purchase order
 exports.purchase_order_raw_add_new = (req, res, next) => {
-    console.log(req.body)
-    //generate order number
-    function getOrderNumber() {
-        for (var i = 0; i < 5; i++)
-            var date = new Date()
-        const year = date.getFullYear()
-        const month = date.getMonth() + 1
-        console.log(year.toString() + month.toString() + (Math.random() * 100000).toFixed())
-        //return (moment(Date.now()).format('YYYY/MM') + ((Math.random() * 100000).toFixed()))
-        return year.toString() + month.toString() + (Math.random() * 100000).toFixed()
-    }
-    const purchaseOrdersRaw = new PurchaseOrdersRaw({
-        id: mongoose.Types.ObjectId(),
-        supplierId: req.body.supplierId,
-        userId: req.body.user.user.userId,
-        userName: req.body.user.user.userName,
-        userRole: req.body.user.user.userRole,
-        rawMaterials: req.body.rawMaterials,
-        order_state: "Pending",
-        orderNumber: getOrderNumber()
-    });
-    purchaseOrdersRaw.save()
-        .then(result => {
-            console.log(result);
-        })
-        .catch(err => console.log(err));
-    res.status(200).json({
-        //message: 'New Raw Material successfully created.',
-        purchaseOrdersRaw: purchaseOrdersRaw
-    });
+    Count.findOneAndUpdate({ id: 'purchaseOrderRmNo' }, { $inc: { seq: 1 } }, { "new": true }, (error, doc) => {
+        if (doc) {
+            //generate order number
+            function getOrderNumber() {
+                for (var i = 0; i < 5; i++)
+                    var date = new Date()
+                const year = date.getFullYear()
+                const month = date.getMonth() + 1
+                console.log(year.toString() + month.toString() + (Math.random() * 100000).toFixed())
+                //return (moment(Date.now()).format('YYYY/MM') + ((Math.random() * 100000).toFixed()))
+                return year.toString() + month.toString() + doc.seq
+            }
+            const purchaseOrdersRaw = new PurchaseOrdersRaw({
+                id: mongoose.Types.ObjectId(),
+                supplierId: req.body.supplierId,
+                userId: req.body.user.user.userId,
+                userName: req.body.user.user.userName,
+                userRole: req.body.user.user.userRole,
+                rawMaterials: req.body.rawMaterials,
+                order_state: "Pending",
+                orderNumber: getOrderNumber()
+            });
+            purchaseOrdersRaw.save()
+                .then(result => {
+                    console.log(result);
+                })
+                .catch(err => console.log(err));
+            res.status(200).json({
+                //message: 'New Raw Material successfully created.',
+                purchaseOrdersRaw: purchaseOrdersRaw
+            });
+        }
+    })
 }
+
 //Get all raw materials
 exports.purchase_orders_raw_get_all = (req, res, next) => {
     //PurchaseOrders.find()
@@ -238,18 +242,18 @@ exports.print_purchase_orders_raw = (req, res, next) => {
             const data = result
             if (result) {
                 console.log("doccccc", result)
-                
+
                 createPurchaseOrder(result, "./purchaseorder.pdf")
                 //generate empty pdf
                 function createPurchaseOrder(result, path) {
-                    
+
                     let i;
                     let end;
                     let doc = new PDFDocument({ bufferPages: true });
                     let buffers = [];
                     doc.on('data', buffers.push.bind(buffers));
                     doc.on('end', () => {
-                        
+
                         let pdfData = Buffer.concat(buffers);
                         res.writeHead(200, {
                             'Content-Length': Buffer.byteLength(pdfData),
@@ -258,7 +262,7 @@ exports.print_purchase_orders_raw = (req, res, next) => {
                             'Content-Disposition': 'attachment;filename=invoice.pdf',
                         })
                             .end(pdfData);
-                     
+
 
                     });
                     console.log("ddddd", result)
@@ -281,7 +285,7 @@ exports.print_purchase_orders_raw = (req, res, next) => {
                     //set userName 
                     for (i = range.start, end = range.start + range.count, range.start <= end; i < end; i++) {
                         doc.switchToPage(i);
-                        doc.text(`Purchase Order Created By: ${result[0].userName}`, 50,
+                        doc.text(`This is system generate document. No sign required`, 50,
                             700,
                             { align: "center", width: 500 });
                     }
@@ -319,33 +323,33 @@ exports.print_purchase_orders_raw = (req, res, next) => {
                 // }
                 //generate customer information
                 function generateSupplierInformation(doc, result) {
-                    const results = result.map(data => {                       
+                    const results = result.map(data => {
                         const companyName = data.supplier.map(supplier => {
                             return supplier.companyName
                         })
-                        const mobileNo = data.supplier.map(supplier => {                            
-                            return supplier.mobileNo
+                        const mobileNo = data.supplier.map(supplier => {
+                            return supplier.mobileNo1
                         })
                         const email = data.supplier.map(supplier => {
                             return supplier.email
                         })
-                        const address = data.supplier.map(address => {                            
-                            return address.registerAddress
+                        const address = data.supplier.map(address => {
+                            return address.communicationAddress
                         })
-                        const no = address.map(no => {                          
-                            return no.no2
+                        const no = address.map(no => {
+                            return no.no
                         })
-                        const lane = address.map(lane => {                          
-                            return lane.lane2
+                        const lane = address.map(lane => {
+                            return lane.lane
                         })
                         const city = address.map(city => {
-                            return city.city2
+                            return city.city
                         })
                         const country = address.map(country => {
-                            return country.country2
+                            return country.country
                         })
                         const postalCode = address.map(postalCode => {
-                            return postalCode.postalCode2
+                            return postalCode.postalCode
                         })
                         doc
                             .fillColor("#444444")
@@ -383,14 +387,14 @@ exports.print_purchase_orders_raw = (req, res, next) => {
                 }
                 //generate table row
                 function generateTableRow(doc, y, materialCodeRm, productName, uom, quantity) {
-                    
+
                     doc
                         .font("Helvetica")
-                        .fontSize(10)
+                        .fontSize(9)
                         .text(materialCodeRm, 50, y)
-                        .text(productName, 200, y)
-                        .text(uom, 320, y, { width: 50, align: "right" })
-                        .text(quantity, 470, y, { width: 50, align: "right" })                        
+                        .text(productName, 90, y)
+                        .text(uom, 380, y, { width: 50, align: "right" })
+                        .text(quantity, 470, y, { width: 50, align: "right" })
                 }
                 // function getSubTotal(result) {
 
@@ -414,26 +418,26 @@ exports.print_purchase_orders_raw = (req, res, next) => {
 
                 //generate invoice table
                 function generateOrderTable(doc, result) {
-                   
+
                     const productTable = result.map(data => {
-                        
+
                         let i,
-                            orderTableTop = 330;
-                        const products = data.rawMaterialsList.map(data => {                           
+                            orderTableTop = 290;
+                        const products = data.rawMaterialsList.map(data => {
                             return data
                         })
-                        
+
                         const quantities = data.rawMaterials.map(data => {
                             return data
                         })
-                        doc.font("Helvetica-Bold")
+                        doc.font("Helvetica")
                         generateTableRow(
                             doc,
                             orderTableTop,
-                            "Material Code",
+                            "Code",
                             "Material Name",
                             "UOM",
-                            "Quantity"                           
+                            "Quantity"
                         );
                         generateHr(doc, orderTableTop + 20);
                         doc.font("Helvetica")
@@ -448,7 +452,7 @@ exports.print_purchase_orders_raw = (req, res, next) => {
                                     `RM${product.materialCodeRm}`,
                                     product.materialName,
                                     quantity.uom,
-                                    quantity.quantity                                    
+                                    quantity.quantity
                                 );
                                 generateHr(doc, position + 20);
                             }
@@ -460,7 +464,7 @@ exports.print_purchase_orders_raw = (req, res, next) => {
                             "",
                             "",
                             "",
-                         
+
                             //getSubTotal(result)
                         );
 

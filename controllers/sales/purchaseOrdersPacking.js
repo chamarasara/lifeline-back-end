@@ -6,36 +6,41 @@ const moment = require('moment');
 //const Supplier = require('../../models/master/SupplierMaster');
 //Add new purchase order
 exports.purchase_order_packing_add_new = (req, res, next) => {
-    //generate order number
-    function getOrderNumber() {
-        for (var i = 0; i < 5; i++)
-            var date = new Date()
-        const year = date.getFullYear()
-        const month = date.getMonth() + 1
-        console.log(year.toString() + month.toString() + (Math.random() * 100000).toFixed())
-        //return (moment(Date.now()).format('YYYY/MM') + ((Math.random() * 100000).toFixed()))
-        return year.toString() + month.toString() + (Math.random() * 100000).toFixed()
-    }
-    const purchaseOrdersPacking = new PurchaseOrdersPacking({
-        id: mongoose.Types.ObjectId(),
-        supplierId: req.body.supplierId,
-        userId: req.body.userId,
-        userName: req.body.user.user.userName,
-        userRole: req.body.user.user.userRole,
-        order_state: "Pending",
-        orderNumber: getOrderNumber(),
-        packingMaterials: req.body.packingMaterials
-    });
-    purchaseOrdersPacking.save()
-        .then(result => {
-            console.log(result);
-        })
-        .catch(err => console.log(err));
-    res.status(200).json({
-        //message: 'New Raw Material successfully created.',
-        purchaseOrdersPacking: purchaseOrdersPacking
-    });
+    Count.findOneAndUpdate({ id: 'purchaseOrderPmNo' }, { $inc: { seq: 1 } }, { "new": true }, (error, doc) => {
+        if (doc) {
+            //generate order number
+            function getOrderNumber() {
+                for (var i = 0; i < 5; i++)
+                    var date = new Date()
+                const year = date.getFullYear()
+                const month = date.getMonth() + 1
+                console.log(year.toString() + month.toString() + (Math.random() * 100000).toFixed())
+                //return (moment(Date.now()).format('YYYY/MM') + ((Math.random() * 100000).toFixed()))
+                return year.toString() + month.toString() + doc.seq
+            }
+            const purchaseOrdersPacking = new PurchaseOrdersPacking({
+                id: mongoose.Types.ObjectId(),
+                supplierId: req.body.supplierId,
+                userId: req.body.userId,
+                userName: req.body.user.user.userName,
+                userRole: req.body.user.user.userRole,
+                order_state: "Pending",
+                orderNumber: getOrderNumber(),
+                packingMaterials: req.body.packingMaterials
+            });
+            purchaseOrdersPacking.save()
+                .then(result => {
+                    console.log(result);
+                })
+                .catch(err => console.log(err));
+            res.status(200).json({
+                //message: 'New Raw Material successfully created.',
+                purchaseOrdersPacking: purchaseOrdersPacking
+            });
+        }
+    })
 }
+
 //Get all raw materials
 exports.purchase_orders_packing_get_all = (req, res, next) => {
     //PurchaseOrders.find()
@@ -276,7 +281,7 @@ exports.print_purchase_orders_packing = (req, res, next) => {
                     //set userName 
                     for (i = range.start, end = range.start + range.count, range.start <= end; i < end; i++) {
                         doc.switchToPage(i);
-                        doc.text(`Purchase Order Created By: ${result[0].userName}`, 50,
+                        doc.text(`This is system generate document. No sign required`, 50,
                             700,
                             { align: "center", width: 500 });
                     }
@@ -307,28 +312,28 @@ exports.print_purchase_orders_packing = (req, res, next) => {
                             return supplier.companyName
                         })
                         const mobileNo = data.supplier.map(supplier => {
-                            return supplier.mobileNo
+                            return supplier.mobileNo1
                         })
                         const email = data.supplier.map(supplier => {
                             return supplier.email
                         })
                         const address = data.supplier.map(address => {
-                            return address.registerAddress
+                            return address.communicationAddress
                         })
                         const no = address.map(no => {
-                            return no.no2
+                            return no.no
                         })
                         const lane = address.map(lane => {
-                            return lane.lane2
+                            return lane.lane
                         })
                         const city = address.map(city => {
-                            return city.city2
+                            return city.city
                         })
                         const country = address.map(country => {
-                            return country.country2
+                            return country.country
                         })
                         const postalCode = address.map(postalCode => {
-                            return postalCode.postalCode2
+                            return postalCode.postalCode
                         })
                         doc
                             .fillColor("#444444")
@@ -369,10 +374,10 @@ exports.print_purchase_orders_packing = (req, res, next) => {
 
                     doc
                         .font("Helvetica")
-                        .fontSize(10)
+                        .fontSize(9)
                         .text(productCode, 50, y)
-                        .text(productName, 200, y)
-                        .text(uom, 320, y, { width: 50, align: "right" })
+                        .text(productName, 90, y)
+                        .text(uom, 380, y, { width: 50, align: "right" })
                         .text(quantity, 470, y, { width: 50, align: "right" })
                 }
                 // function getSubTotal(result) {
@@ -401,7 +406,7 @@ exports.print_purchase_orders_packing = (req, res, next) => {
                     const productTable = result.map(data => {
 
                         let i,
-                            orderTableTop = 330;
+                            orderTableTop = 290;
                         const products = data.packingMaterialsList.map(data => {
                             return data
                         })
@@ -413,7 +418,7 @@ exports.print_purchase_orders_packing = (req, res, next) => {
                         generateTableRow(
                             doc,
                             orderTableTop,
-                            "Material Code",
+                            "Code",
                             "Material Name",
                             "UOM",
                             "Quantity"
