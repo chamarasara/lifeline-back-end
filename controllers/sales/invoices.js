@@ -9,7 +9,7 @@ const PDFDocument = require("pdfkit");
 exports.add_new_invoice = (req, res, next) => {
 
     Count.findOneAndUpdate({ id: 'invoiceNo' }, { $inc: { seq: 1 } }, { "new": true }, (error, doc) => {
-
+       
         if (doc) {
             //generate invoice number
             function getInvoiceNumber() {

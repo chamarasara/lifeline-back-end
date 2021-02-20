@@ -11,5 +11,4 @@ const CountSchema = new mongoose.Schema({
     }
 )
 
-
 module.exports = Count = mongoose.model('Count', CountSchema)

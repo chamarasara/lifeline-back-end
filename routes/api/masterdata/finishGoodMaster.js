@@ -9,10 +9,10 @@ router.post('/new-finish-good-material', FinishGoodController.finish_good_add_ne
 //All packing materials
 router.get('/all-finish-good-materials', FinishGoodController.finish_good_get_all);
 //Get single packing material
-router.get('/single-finish-good-material/:_id', FinishGoodController.finish_good_get_one);
+router.get('/single-finish-good-material/:id', FinishGoodController.finish_good_get_one);
 //Update packing material
 router.patch('/update-finish-good-material/:_id', FinishGoodController.update_finish_good);
 //Delete packing material
-router.delete('/delete-finish-good-material/:_id', FinishGoodController.delete_finish_good);
+router.delete('/delete-finish-good-material/:id', FinishGoodController.delete_finish_good);
 
 module.exports = router;

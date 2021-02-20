@@ -16,10 +16,22 @@ exports.finish_good_add_new = (req, res, next) => {
         baseUnitMeasure: req.body.baseUnitMeasure,
         division: req.body.division,
         productState: req.body.productState,
+        unitsInPack: req.body.unitsInPack,
+        profitCenter: req.body.profitCenter,
+        minimumSellingUnits: req.body.minimumSellingUnits,
         barCode: req.body.barCode,
         barCodeImage: req.body.barCodeImage,
+        artWorkNumber: req.body.artWorkNumber,
         productDescription: req.body.productDescription,
-        sellingPrice: req.body.sellingPrice,
+        sellingPrice: req.body.sellingPrice,        
+        factoryPrice: req.body.factoryPrice,
+        distributorMargin: req.body.distributorMargin,
+        retailerMargin: req.body.retailerMargin,
+        freeIssues: req.body.freeIssues,
+        maximumDiscount: req.body.maximumDiscount,
+        distributors: req.body.distributors,
+        shelfLife: req.body.shelfLife,
+        perfumeCode: req.body.perfumeCode,
         userId: req.body.user.user.userId,
         userName: req.body.user.user.userName,
         userRole: req.body.user.user.userRole,
@@ -36,7 +48,18 @@ exports.finish_good_add_new = (req, res, next) => {
 }
 //Get all raw materials
 exports.finish_good_get_all = (req, res, next) => {
-    FinishGoodMaster.find()
+    FinishGoodMaster.aggregate(
+        [
+            {
+                '$lookup': {
+                    from: 'distributormasters',
+                    localField: 'distributors.id',
+                    foreignField: 'id',
+                    as: 'distributorsList'
+                }
+            }
+        ]
+    )
         .exec()
         .then(docs => {
             console.log(docs);
@@ -49,8 +72,24 @@ exports.finish_good_get_all = (req, res, next) => {
         });
 }
 exports.finish_good_get_one = (req, res, next) => {
-    id = req.params._id;
-    FinishGoodMaster.findById(id)
+    id = req.params.id;
+    console.log(req.params._id)
+    FinishGoodMaster.aggregate(
+        [
+            {
+                '$match': {
+                    id: id
+                }
+            },
+            {
+                '$lookup': {
+                    from: 'distributormasters',
+                    localField: 'distributors.id',
+                    foreignField: 'id',
+                    as: 'distributorsList'
+                }
+            }]
+    ) 
         .exec()
         .then(doc => {
             if (doc) {
@@ -99,8 +138,8 @@ exports.update_finish_good = (req, res, next) => {
 
 //Delete raw material
 exports.delete_finish_good = (req, res, next) => {
-    const id = req.params._id;
-    FinishGoodMaster.remove({ _id: id })
+    const id = req.params.id;
+    FinishGoodMaster.remove({ id: id })
         .exec()
         .then(result => {
             res.status(200).json(result);
