@@ -27,6 +27,7 @@ exports.add_new_invoice = (req, res, next) => {
                 customerId: req.body.customerId,
                 quotationNumber: req.body.quotationNumber,
                 remarks: req.body.remarks,
+                reference: req.body.reference,
                 userId: req.body.user.user.userId,
                 userName: req.body.user.user.userName,
                 userRole: req.body.user.user.userRole,
@@ -470,7 +471,7 @@ exports.print_invoice = (req, res, next) => {
                             .text(`Invoice Date: ${moment(data.date).format('DD/MM/YYYY')}`, 50, 230)
                             .text(`Due Date: ${moment(data.date).add('d', creditPeriod).format('DD/MM/YYYY')}`, 50, 245)
                             .text(`Credit Period: ${creditPeriod} days`, 50, 260)
-                            .text(`Created By: ${data.userName}`, 50, 275)
+                            .text(`Your Reference: ${data.reference}`, 50, 275)
                             .text(`${companyName}`, 350, 200)
                             .font("Helvetica")
                             .text(`${no},${lane}`, 350, 215)
@@ -495,6 +496,18 @@ exports.print_invoice = (req, res, next) => {
                 function generateTableRow(doc, y, productCode, productName, uom, quantity, rate, discount, total) {
                     doc
                         .font("Helvetica")
+                        .fontSize(9)
+                        .text(productCode, 50, y, { width: 50 })
+                        .text(productName, 90, y, { width: 180 })
+                        .text(uom, 270, y, { width: 40, align: "right" })
+                        .text(quantity, 300, y, { width: 60, align: "right" })
+                        .text(rate, 350, y, { width: 50, align: "right" })
+                        .text(discount, 400, y, { width: 50, align: "right" })
+                        .text(total, 0, y, { align: "right" });
+                }
+                function generateTableRowTop(doc, y, productCode, productName, uom, quantity, rate, discount, total) {
+                    doc
+                        .font("Helvetica-Bold")
                         .fontSize(9)
                         .text(productCode, 50, y, { width: 50 })
                         .text(productName, 90, y, { width: 180 })
@@ -561,7 +574,7 @@ exports.print_invoice = (req, res, next) => {
                             return data
                         })
                         doc.font("Helvetica")
-                        generateTableRow(
+                        generateTableRowTop(
                             doc,
                             invoiceTableTop,
                             "Code",
@@ -573,7 +586,6 @@ exports.print_invoice = (req, res, next) => {
                             "Total"
                         );
                         generateHr(doc, invoiceTableTop + 20);
-                        doc.font("Helvetica")
                         for (i = 0; i < products.length; i++) {
                             for (let index = 0; index < quantities.length; index++) {
                                 const product = products[i];

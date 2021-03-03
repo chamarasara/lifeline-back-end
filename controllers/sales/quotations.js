@@ -470,7 +470,6 @@ exports.print_quotation = (req, res, next) => {
                             return address.communicationAddress
                         })
                         const creditPeriod = data.customerDetails.map(creditPeriod => {
-                            console.log("credit period", creditPeriod.creditPeriod)
                             return creditPeriod.creditPeriod
                         })
                         const no = address.map(no => {
@@ -502,7 +501,7 @@ exports.print_quotation = (req, res, next) => {
                             .text(`Quotation Number: ${data.quotationNumber}`, 50, 200)
                             .text(`Quotation Date: ${moment(data.date).format('DD/MM/YYYY')}`, 50, 215)
                             .text(`Valid Till: ${moment(data.date).add('d', 14).format('DD/MM/YYYY')}`, 50, 230)
-                            .text(`Credit Period: ${creditPeriod}`, 50, 245)
+                            .text(`Credit Period: ${creditPeriod} Days`, 50, 245)
                             .text(`Created By: ${data.userName}`, 50, 260)
                             .text(`${companyName}`, 350, 200)
                             .font("Helvetica")

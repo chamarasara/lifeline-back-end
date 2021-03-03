@@ -23,12 +23,14 @@ app.use('/api/master-data/supplier-master', require('./routes/api/masterdata/sup
 app.use('/api/master-data/customer-master', require('./routes/api/masterdata/customerMaster'))
 app.use('/api/master-data/distributor-master', require('./routes/api/masterdata/distributorMaster'))
 app.use('/api/master-data/product-master', require('./routes/api/masterdata/productsMaster'))
+app.use('/api/master-data/employee-master', require('./routes/api/masterdata/employeeMaster'))
 app.use('/api/sales/purchase-orders-raw', require('./routes/api/sales/purchaseOrdersRaw'))
 app.use('/api/sales/purchase-orders-packing', require('./routes/api/sales/purchaseOrdersPacking'))
 app.use('/api/sales/invoices', require('./routes/api/sales/invoices'))
 app.use('/api/sales/quotations', require('./routes/api/sales/quotations'))
 app.use('/api/master-data/bom', require('./routes/api/masterdata/bomMaster'))
 app.use('/api/inventory/finish-good', require('./routes/api/inventory/finishGood'))
+app.use('/api/hr/salaries', require('./routes/api/hr/salaries'))
 
 
 const PORT = process.env.PORT || 5000;

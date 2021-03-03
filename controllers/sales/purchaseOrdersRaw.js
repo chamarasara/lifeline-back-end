@@ -333,6 +333,9 @@ exports.print_purchase_orders_raw = (req, res, next) => {
                         const email = data.supplier.map(supplier => {
                             return supplier.email
                         })
+                        const creditPeriod = data.supplier.map(supplier => {
+                            return supplier.creditPeriod
+                        })
                         const address = data.supplier.map(address => {
                             return address.communicationAddress
                         })
@@ -363,8 +366,8 @@ exports.print_purchase_orders_raw = (req, res, next) => {
                             .font("Helvetica-Bold")
                             .text(`Order Number: ${data.orderNumber}`, 50, 200)
                             .text(`Order Date: ${moment(data.date).format('DD/MM/YYYY')}`, 50, 215)
-                            //.text(`Total Value: ${getSubTotal(result)}${getCurrency(result)}`, 50, 230)
-                            .text(`Created By: ${data.userName}`, 50, 230)
+                            .text(`Credit Period: ${creditPeriod} Days`, 50, 230)
+                            .text(`Created By: ${data.userName}`, 50, 245)
                             .text(`${companyName}`, 350, 200)
                             .font("Helvetica")
                             .text(`${no},${lane}`, 350, 215)

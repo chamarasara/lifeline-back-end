@@ -6,6 +6,7 @@ const InvoicesSchema = new mongoose.Schema({
     customerId: { type: String, require: true },
     quotationNumber: { type: String },
     remarks: { type: String },
+    reference: { type: String, default:"-" },
     userId: { type: String },
     userName: { type: String },
     userRole: { type: String },

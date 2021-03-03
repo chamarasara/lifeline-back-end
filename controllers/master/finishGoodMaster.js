@@ -9,6 +9,14 @@ exports.finish_good_add_new = (req, res, next) => {
         //return (moment(Date.now()).format('YYYY/MM') + ((Math.random() * 100000).toFixed()))
         return "RM" + (Math.random() * 10000).toFixed()
     }
+    function getFactoryPrice() {
+        const retailerMargin = req.body.retailerMargin
+        const distributorMargin = req.body.distributorMargin
+        const retailerMarginTotal = req.body.sellingPrice / 100 * (100 - retailerMargin)
+        const factoryPrice = retailerMarginTotal / 100 * (100 - distributorMargin)
+        return factoryPrice
+    }
+
     const finishGoodMaster = new FinishGoodMaster({
         id: mongoose.Types.ObjectId(),
         productName: req.body.productName,
@@ -23,8 +31,8 @@ exports.finish_good_add_new = (req, res, next) => {
         barCodeImage: req.body.barCodeImage,
         artWorkNumber: req.body.artWorkNumber,
         productDescription: req.body.productDescription,
-        sellingPrice: req.body.sellingPrice,        
-        factoryPrice: req.body.factoryPrice,
+        sellingPrice: req.body.sellingPrice,
+        factoryPrice: getFactoryPrice(),
         distributorMargin: req.body.distributorMargin,
         retailerMargin: req.body.retailerMargin,
         freeIssues: req.body.freeIssues,
@@ -89,7 +97,7 @@ exports.finish_good_get_one = (req, res, next) => {
                     as: 'distributorsList'
                 }
             }]
-    ) 
+    )
         .exec()
         .then(doc => {
             if (doc) {
