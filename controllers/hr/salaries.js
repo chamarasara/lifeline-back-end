@@ -585,7 +585,7 @@ exports.print_salary = (req, res, next) => {
                                 doc,
                                 salaryTableTop + 220,
                                 "Total Deductions ",
-                                `(${total.toFixed(2)})`
+                                `(${formatNumber(total.toFixed(2))})` 
                             );
                         }
                         generateLineIncome(doc, 532)
@@ -597,7 +597,7 @@ exports.print_salary = (req, res, next) => {
                                 doc,
                                 salaryTableTop + 236,
                                 "Net Earning ",
-                                total.toFixed(2)
+                                formatNumber(total.toFixed(2))
                             );
                         }
                         generateLineIncome(doc, 547)
