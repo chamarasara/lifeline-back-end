@@ -26,6 +26,7 @@ exports.add_new_salary = (req, res, next) => {
                 month: req.body.month,
                 overTimeHours: req.body.overTimeHours,
                 overTimeRate: req.body.overTimeRate,
+                attendanceAllowance: req.body.attendanceAllowance,
                 loanRecovery: req.body.loanRecovery,
                 stampDuty: req.body.stampDuty,
                 noPay: req.body.noPay,
@@ -334,7 +335,7 @@ exports.print_salary = (req, res, next) => {
                             .font("Helvetica")
                             .text(`Employee Number: ${employeeNumber}`, 390, 200)
                             .text(`Reference Number: ${data.referanceNumber}`, 390, 220)
-                            .text(`Month: ${data.month}`, 390, 240)                            
+                            .text(`Month: ${data.month}`, 390, 240)
                             .moveDown();
 
                         generateHr(doc, 285);
@@ -348,7 +349,7 @@ exports.print_salary = (req, res, next) => {
                         .moveTo(50, y)
                         .lineTo(550, y)
                         .stroke();
-                }                                
+                }
                 function generateLineIncome(doc, y) {
                     doc
                         .strokeColor("#aaaaaa")
@@ -491,10 +492,10 @@ exports.print_salary = (req, res, next) => {
                             "Food Allowance",
                             formatNumber(foodAllowance[0].toFixed(2))
                         );
-                       
+
                         const bonus = data.employeeDetails.map(employee => {
                             return employee.bonus
-                        })                        
+                        })
                         generateTableRow(
                             doc,
                             salaryTableTop + 100,
@@ -517,14 +518,26 @@ exports.print_salary = (req, res, next) => {
                             "Bonus",
                             formatNumber(bonus[0].toFixed(2))
                         );
-                        generateLineIncome(doc, 435)
+                        for (i = 0; i < result.length; i++) {
+                            const item = result[i];
+                            const attendance = item.attendanceAllowance
+                            const position = invoiceTableTop + (i + 1) * 30;
+                            generateTableRowSubItem(
+                                doc,
+                                salaryTableTop + 135,
+                                "Attendance Allowance",
+                                formatNumber(attendance.toFixed(2))
+                            );
+                        }
+                        generateLineIncome(doc, 445)
                         for (i = 0; i < result.length; i++) {
                             const item = result[i];
                             const ot = item.overTimeHours * item.overTimeRate
-                            const total = basicSalary[0] + vehicleAllowance[0] + fuelAllowance[0] + transportAllowance[0] + telephoneAllowance[0] + foodAllowance[0] + bonus[0] + ot
+                            const attendance = item.attendanceAllowance
+                            const total = basicSalary[0] + vehicleAllowance[0] + fuelAllowance[0] + transportAllowance[0] + telephoneAllowance[0] + foodAllowance[0] + bonus[0] + ot + attendance
                             generateTableRow(
                                 doc,
-                                salaryTableTop + 140,
+                                salaryTableTop + 148,
                                 "Gross Earnings",
                                 formatNumber(total.toFixed(2))
                             );
@@ -532,7 +545,7 @@ exports.print_salary = (req, res, next) => {
                         for (i = 0; i < result.length; i++) {
                             generateTableRow(
                                 doc,
-                                salaryTableTop + 160,
+                                salaryTableTop + 162,
                                 "Deductions (-)"
                             );
                         }
@@ -585,14 +598,15 @@ exports.print_salary = (req, res, next) => {
                                 doc,
                                 salaryTableTop + 220,
                                 "Total Deductions ",
-                                `(${formatNumber(total.toFixed(2))})` 
+                                `(${formatNumber(total.toFixed(2))})`
                             );
                         }
                         generateLineIncome(doc, 532)
                         for (i = 0; i < result.length; i++) {
                             const item = result[i];
                             const ot = item.overTimeHours * item.overTimeRate
-                            const total =( basicSalary[0] + vehicleAllowance[0] + fuelAllowance[0] + transportAllowance[0] + telephoneAllowance[0] + foodAllowance[0] + bonus[0] + ot) -(epfEmployee[0] + item.loanRecovery + item.stampDuty + item.noPay)
+                            const attendance = item.attendanceAllowance
+                            const total = (basicSalary[0] + vehicleAllowance[0] + fuelAllowance[0] + transportAllowance[0] + telephoneAllowance[0] + foodAllowance[0] + bonus[0] + ot + attendance) - (epfEmployee[0] + item.loanRecovery + item.stampDuty + item.noPay)
                             generateTableRow(
                                 doc,
                                 salaryTableTop + 236,
@@ -607,11 +621,11 @@ exports.print_salary = (req, res, next) => {
                             const position = invoiceTableTop + (i + 1) * 30;
                             generateTableRowTopRight(
                                 doc,
-                                salaryTableTop ,
+                                salaryTableTop,
                                 "Other Benifits",
                                 "Amount"
                             );
-                        }                       
+                        }
                         const insuaranceCost = data.employeeDetails.map(employee => {
                             return employee.insuaranceCost
                         })
@@ -663,7 +677,7 @@ exports.print_salary = (req, res, next) => {
                                 "ETF 3% Employer",
                                 formatNumber(etfEmployee[0].toFixed(2))
                             );
-                        }                        
+                        }
                     }
                     )
                 }

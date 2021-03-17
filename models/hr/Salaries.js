@@ -9,6 +9,7 @@ const SalariesShema = new mongoose.Schema({
     overTimeHours: { type: Number, default: 0 },
     overTimeRate: { type: Number, default: 0 },
     loanRecovery: { type: Number, default: 0 },
+    attendanceAllowance: { type: Number, default: 0 },
     stampDuty: { type: Number, default: 0 },
     noPay: { type: Number, default: 0 },
     userId: { type: String },
