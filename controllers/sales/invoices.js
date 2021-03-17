@@ -4,9 +4,49 @@ const mongoose = require('mongoose');
 const moment = require('moment');
 const fs = require("fs");
 const PDFDocument = require("pdfkit");
+const Finishgoodsmasters = require('../../models/master/FinishGoodsMaster');
 
 //Add new purchase order
 exports.add_new_invoice = (req, res, next) => {
+
+    // const productIdList = [];
+
+    // console.log("req.body.products.length ****", req.body.products.length)
+    // for (let i = 0; i < req.body.products.length; i++) {
+    //     console.log("req.body.products[i]).id***", req.body.products[i].id);
+    //     productIdList.push(mongoose.Types.ObjectId(req.body.products[i].id));
+
+    // }
+    // console.log("productIdList1 ****** ", productIdList);
+
+    // Finishgoodsmasters.find({
+    //     'id': {
+    //         $in: productIdList
+    //         // [
+    //         //     mongoose.Types.ObjectId('4ed3ede8844f0f351100000c'),
+    //         //     mongoose.Types.ObjectId('4ed3f117a844e0471100000d'),
+    //         //     mongoose.Types.ObjectId('4ed3f18132f50c491100000e')
+    //         // ]
+    //     }
+    // }, function (err, docs) {
+    //     this.productIdList = docs;
+    //     console.log("productListResponse ******* ", docs);
+    // });
+
+    // const invoices = new Invoices({
+    //     id: mongoose.Types.ObjectId(),
+    //     customerId: req.body.customerId,
+    //     quotationNumber: req.body.quotationNumber,
+    //     remarks: req.body.remarks,
+    //     reference: req.body.reference,
+    //     userId: req.body.user.user.userId,
+    //     userName: req.body.user.user.userName,
+    //     userRole: req.body.user.user.userRole,
+    //     invoice_state: "enabled",
+    //     products: this.productsList,
+    //     invoiceNumber: getInvoiceNumber()
+    // });
+    // console.log("Updated Invoice ******* ", invoices);
 
     Count.findOneAndUpdate({ id: 'invoiceNo' }, { $inc: { seq: 1 } }, { "new": true }, (error, doc) => {
        
@@ -35,6 +75,7 @@ exports.add_new_invoice = (req, res, next) => {
                 products: req.body.products,
                 invoiceNumber: getInvoiceNumber()
             });
+
             invoices.save()
                 .then(result => {
                     //console.log(result);
