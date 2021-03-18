@@ -335,7 +335,7 @@ exports.print_salary = (req, res, next) => {
                             .font("Helvetica")
                             .text(`Employee Number: ${employeeNumber}`, 390, 200)
                             .text(`Reference Number: ${data.referanceNumber}`, 390, 220)
-                            .text(`Month: ${data.month}`, 390, 240)
+                            .text(`Month: ${data.month} ${moment(data.date).format('YYYY')}`, 390, 240)
                             .moveDown();
 
                         generateHr(doc, 285);
