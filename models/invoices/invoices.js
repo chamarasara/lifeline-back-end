@@ -16,7 +16,7 @@ const InvoicesSchema = new mongoose.Schema({
     invoiceNumber: { type: String },
     advancePayment: { type: Number },
     paymentsAll: { type: Array },
-    haveReturns: { type: String }
+    haveReturns: { type: Boolean, default:false }
 },
     {
         timestamps: true
