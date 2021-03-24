@@ -1,55 +1,15 @@
-const Invoices = require('../../models/invoices/invoices');
+const ReturnInvoices = require('../../models/invoices/ReturnInvoice');
 const Count = require('../../models/counter/count');
 const mongoose = require('mongoose');
 const moment = require('moment');
 const fs = require("fs");
 const PDFDocument = require("pdfkit");
-const Finishgoodsmasters = require('../../models/master/FinishGoodsMaster');
 
 //Add new purchase order
-exports.add_new_invoice = (req, res, next) => {
+exports.add_new_returnInvoice = (req, res, next) => {
 
-    // const productIdList = [];
+    Count.findOneAndUpdate({ id: 'returnInvoiceNo' }, { $inc: { seq: 1 } }, { "new": true }, (error, doc) => {
 
-    // console.log("req.body.products.length ****", req.body.products.length)
-    // for (let i = 0; i < req.body.products.length; i++) {
-    //     console.log("req.body.products[i]).id***", req.body.products[i].id);
-    //     productIdList.push(mongoose.Types.ObjectId(req.body.products[i].id));
-
-    // }
-    // console.log("productIdList1 ****** ", productIdList);
-
-    // Finishgoodsmasters.find({
-    //     'id': {
-    //         $in: productIdList
-    //         // [
-    //         //     mongoose.Types.ObjectId('4ed3ede8844f0f351100000c'),
-    //         //     mongoose.Types.ObjectId('4ed3f117a844e0471100000d'),
-    //         //     mongoose.Types.ObjectId('4ed3f18132f50c491100000e')
-    //         // ]
-    //     }
-    // }, function (err, docs) {
-    //     this.productIdList = docs;
-    //     console.log("productListResponse ******* ", docs);
-    // });
-
-    // const invoices = new Invoices({
-    //     id: mongoose.Types.ObjectId(),
-    //     customerId: req.body.customerId,
-    //     quotationNumber: req.body.quotationNumber,
-    //     remarks: req.body.remarks,
-    //     reference: req.body.reference,
-    //     userId: req.body.user.user.userId,
-    //     userName: req.body.user.user.userName,
-    //     userRole: req.body.user.user.userRole,
-    //     invoice_state: "enabled",
-    //     products: this.productsList,
-    //     invoiceNumber: getInvoiceNumber()
-    // });
-    // console.log("Updated Invoice ******* ", invoices);
-
-    Count.findOneAndUpdate({ id: 'invoiceNo' }, { $inc: { seq: 1 } }, { "new": true }, (error, doc) => {
-       
         if (doc) {
             //generate invoice number
             function getInvoiceNumber() {
@@ -59,39 +19,37 @@ exports.add_new_invoice = (req, res, next) => {
                 const month = date.getMonth() + 1
                 //console.log("IN" + year.toString() + month.toString() + doc.seq)
                 //return (moment(Date.now()).format('YYYY/MM') + ((Math.random() * 100000).toFixed()))
-                return "IN" + year.toString() + month.toString() + doc.seq
+                return "RIN" + year.toString() + month.toString() + doc.seq
             }
-
-            const invoices = new Invoices({
+            console.log("req", req.body)
+            const returnInvoices = new ReturnInvoices({
                 id: mongoose.Types.ObjectId(),
+                returnInvoiceNumber: getInvoiceNumber(),
+                invoiceId: req.body.id,
+                invoiceNumber: req.body.invoiceNumber,
                 customerId: req.body.customerId,
-                quotationNumber: req.body.quotationNumber,
-                remarks: req.body.remarks,
-                reference: req.body.reference,
+                products: req.body.products,
+                reason: req.body.reason,
                 userId: req.body.user.user.userId,
                 userName: req.body.user.user.userName,
-                userRole: req.body.user.user.userRole,
-                invoice_state: "enabled",
-                products: req.body.products,
-                haveReturns : "false",
-                invoiceNumber: getInvoiceNumber()
+                userRole: req.body.user.user.userRole
             });
 
-            invoices.save()
+            returnInvoices.save()
                 .then(result => {
                     //console.log(result);
                 })
                 .catch(err => console.log(err));
             res.status(200).json({
                 //message: 'New Raw Material successfully created.',
-                invoices: invoices
+                returnInvoices: returnInvoices
             });
         }
     })
 }
 //Get all invoices
-exports.all_invoices = (req, res, next) => {
-    Invoices.aggregate(
+exports.all_return_invoices = (req, res, next) => {
+    ReturnInvoices.aggregate(
         [
             {
                 '$lookup': {
@@ -126,10 +84,10 @@ exports.all_invoices = (req, res, next) => {
             },
             {
                 '$lookup': {
-                    from: 'quotations',
-                    localField: 'quotationNumber',
+                    from: 'invoices',
+                    localField: 'invoiceId',
                     foreignField: 'id',
-                    as: 'quotation'
+                    as: 'invoiceDetails'
                 }
             }
         ]
@@ -144,13 +102,13 @@ exports.all_invoices = (req, res, next) => {
             })
         });
 }
-exports.single_invoice = (req, res, next) => {
-
-    Invoices.aggregate(
+exports.single_return_invoice = (req, res, next) => {
+    //console.log("req", req.params.id)
+    ReturnInvoices.aggregate(
         [
             {
                 '$match': {
-                    id: req.params.id
+                    invoiceId: req.params.id
                 }
             },
             {
@@ -186,17 +144,18 @@ exports.single_invoice = (req, res, next) => {
             },
             {
                 '$lookup': {
-                    from: 'quotations',
-                    localField: 'quotationNumber',
+                    from: 'invoices',
+                    localField: 'invoiceId',
                     foreignField: 'id',
-                    as: 'quotation'
+                    as: 'invoiceDetails'
                 }
-            },
+            }
         ]
     )
         .exec()
         .then(doc => {
             if (doc) {
+                console.log("doc", doc)
                 res.status(200).json(doc);
             } else {
                 res.status(404).json({ message: "No valid ID found" })
@@ -210,17 +169,18 @@ exports.single_invoice = (req, res, next) => {
 }
 
 //Update raw material
-exports.update_invoice = (req, res, next) => {
+exports.update_return_invoice = (req, res, next) => {
+    console.log(req.body)
     const id = req.params.id;
     const updateOps = {};
     for (const ops in req.body) {
         updateOps[ops.propName] = ops.value;
     }
 
-    Invoices.update({ _id: req.params.id }, { $set: req.body })
+    ReturnInvoices.update({ _id: req.params.id }, { $set: req.body })
         .exec()
         .then(result => {
-            Invoices.findById(id)
+            ReturnInvoices.findById(id)
                 .then(docs => {
                     res.status(200).json(docs);
                 })
@@ -239,9 +199,9 @@ exports.update_invoice = (req, res, next) => {
         });
 }
 //Delete invoice
-exports.delete_invoice = (req, res, next) => {
+exports.delete_return_invoice = (req, res, next) => {
     const id = req.params.id;
-    Invoices.remove({ _id: id })
+    ReturnInvoices.remove({ _id: id })
         .exec()
         .then(result => {
             res.status(200).json(result);
@@ -253,12 +213,11 @@ exports.delete_invoice = (req, res, next) => {
         });
 }
 //Search invoices
-exports.search_invoices = (req, res, next) => {
+exports.search_return_invoices = (req, res, next) => {
 
     const startDate = moment(req.body.formValues.startDate).format('MM/DD/YYYY')
     const endDate = moment(req.body.formValues.endDate).format('MM/DD/YYYY')
-    console.log(req.body.formValues.haveReturns)
-    Invoices.aggregate(
+    ReturnInvoices.aggregate(
         [{
             '$lookup': {
                 from: 'finishgoodsmasters',
@@ -292,10 +251,10 @@ exports.search_invoices = (req, res, next) => {
         },
         {
             '$lookup': {
-                from: 'quotations',
-                localField: 'quotationNumber',
+                from: 'invoices',
+                localField: 'invoiceId',
                 foreignField: 'id',
-                as: 'quotation'
+                as: 'invoiceDetails'
             }
         },
         {
@@ -326,9 +285,9 @@ exports.search_invoices = (req, res, next) => {
 }
 
 
-// Print Invoice
-exports.print_invoice = (req, res, next) => {
-    Invoices.aggregate(
+// Print Return Invoice
+exports.print_return_invoice = (req, res, next) => {
+    ReturnInvoices.aggregate(
         [
             {
                 '$match': {
@@ -345,10 +304,10 @@ exports.print_invoice = (req, res, next) => {
             },
             {
                 '$lookup': {
-                    from: 'quotations',
-                    localField: 'quotationNumber',
+                    from: 'invoices',
+                    localField: 'invoiceId',
                     foreignField: 'id',
-                    as: 'quotation'
+                    as: 'invoiceDetails'
                 }
             },
             {
@@ -380,10 +339,10 @@ exports.print_invoice = (req, res, next) => {
             const data = result
             if (result) {
 
-                createInvoice(result, "./invoice.pdf")
+                createInvoice(result, "./return-invoice.pdf")
                 //generate empty pdf
                 function createInvoice(result, path) {
-                    console.log(result.products)
+                    console.log(result)
                     let i;
                     let end;
                     let doc = new PDFDocument({ bufferPages: true });
@@ -491,29 +450,33 @@ exports.print_invoice = (req, res, next) => {
                         const postalCode = address.map(postalCode => {
                             return postalCode.postalCode
                         })
-                        const quotationNumber = data.quotation.map(quotation => {
-                            return quotation.quotationNumber
-                        })
+
                         const creditPeriod = data.customer.map(creditPeriod => {
                             //console.log("credit period", creditPeriod.creditPeriod)
                             return creditPeriod.creditPeriod
                         })
+                        const invoice = data.invoiceDetails.map(invoice => {
+                            return invoice
+                        })
+                        const invoiceDate = invoice.map(invoiceDate => {
+                            return invoiceDate.date
+                        })
+
                         doc
                             .fillColor("#444444")
                             .fontSize(15)
-                            .text("Invoice", 50, 160);
+                            .text("Return Invoice", 50, 160);
 
                         generateHr(doc, 185);
 
                         doc
                             .fontSize(10)
                             .font("Helvetica-Bold")
-                            .text(`Invoice Number: ${data.invoiceNumber}`, 50, 200)
-                            .text(`Quotation Number: ${quotationNumber}`, 50, 215)
-                            .text(`Invoice Date: ${moment(data.date).format('DD/MM/YYYY')}`, 50, 230)
-                            .text(`Due Date: ${moment(data.date).add('d', creditPeriod).format('DD/MM/YYYY')}`, 50, 245)
-                            .text(`Credit Period: ${creditPeriod} days`, 50, 260)
-                            .text(`Your Reference: ${data.reference}`, 50, 275)
+                            .text(`Return Invoice Number: ${data.returnInvoiceNumber}`, 50, 200)
+                            .text(`Invoice Number: ${data.invoiceNumber}`, 50, 215)
+                            .text(`Invoice Date: ${moment(invoiceDate[0]).format('DD/MM/YYYY')}`, 50, 230)
+                            .text(`Return Date: ${moment(data.date).format('DD/MM/YYYY')}`, 50, 245)
+                            .text(`Reason: ${data.reason}`, 50, 260)
                             .text(`${companyName}`, 350, 200)
                             .font("Helvetica")
                             .text(`${no},${lane}`, 350, 215)
@@ -557,6 +520,7 @@ exports.print_invoice = (req, res, next) => {
                         .text(quantity, 300, y, { width: 60, align: "right" })
                         .text(rate, 350, y, { width: 50, align: "right" })
                         .text(discount, 400, y, { width: 50, align: "right" })
+                        .font("Helvetica-Bold")
                         .text(total, 0, y, { align: "right" });
                 }
                 function formatNumber(num) {
@@ -614,7 +578,7 @@ exports.print_invoice = (req, res, next) => {
                         const quantities = data.products.map(data => {
                             return data
                         })
-                        doc.font("Helvetica")
+                        doc.font("Helvetica-Bold")
                         generateTableRowTop(
                             doc,
                             invoiceTableTop,
@@ -652,6 +616,7 @@ exports.print_invoice = (req, res, next) => {
                             }
                         }
                         const subtotalPosition = invoiceTableTop + (i + 1) * 31;
+                        doc.font("Helvetica-Bold")
                         generateTableRow(
                             doc,
                             subtotalPosition,

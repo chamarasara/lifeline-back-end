@@ -27,6 +27,7 @@ app.use('/api/master-data/employee-master', require('./routes/api/masterdata/emp
 app.use('/api/sales/purchase-orders-raw', require('./routes/api/sales/purchaseOrdersRaw'))
 app.use('/api/sales/purchase-orders-packing', require('./routes/api/sales/purchaseOrdersPacking'))
 app.use('/api/sales/invoices', require('./routes/api/sales/invoices'))
+app.use('/api/sales/return-invoices', require('./routes/api/sales/returnInvoices'))
 app.use('/api/sales/quotations', require('./routes/api/sales/quotations'))
 app.use('/api/master-data/bom', require('./routes/api/masterdata/bomMaster'))
 app.use('/api/inventory/finish-good', require('./routes/api/inventory/finishGood'))
