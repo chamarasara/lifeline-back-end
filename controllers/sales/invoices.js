@@ -257,7 +257,8 @@ exports.search_invoices = (req, res, next) => {
 
     const startDate = moment(req.body.formValues.startDate).format('MM/DD/YYYY')
     const endDate = moment(req.body.formValues.endDate).format('MM/DD/YYYY')
-    console.log(req.body.formValues.haveReturns)
+    const haveReturns = req.body.formValues.haveReturns
+    console.log("formValues", haveReturns)
     Invoices.aggregate(
         [{
             '$lookup': {
