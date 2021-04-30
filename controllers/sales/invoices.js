@@ -49,7 +49,7 @@ exports.add_new_invoice = (req, res, next) => {
     // console.log("Updated Invoice ******* ", invoices);
 
     Count.findOneAndUpdate({ id: 'invoiceNo' }, { $inc: { seq: 1 } }, { "new": true }, (error, doc) => {
-       
+
         if (doc) {
             //generate invoice number
             function getInvoiceNumber() {
@@ -73,7 +73,7 @@ exports.add_new_invoice = (req, res, next) => {
                 userRole: req.body.user.user.userRole,
                 invoice_state: "enabled",
                 products: req.body.products,
-                haveReturns : "false",
+                haveReturns: "false",
                 invoiceNumber: getInvoiceNumber()
             });
 
@@ -209,7 +209,7 @@ exports.single_invoice = (req, res, next) => {
         })
 }
 
-//Update raw material
+//Update  invoice
 exports.update_invoice = (req, res, next) => {
     const id = req.params.id;
     const updateOps = {};
@@ -222,6 +222,45 @@ exports.update_invoice = (req, res, next) => {
         .then(result => {
             Invoices.findById(id)
                 .then(docs => {
+                    res.status(200).json(docs);
+                })
+                .catch(err => {
+                    //console.log(err)
+                    res.status(500).json({
+                        error: err
+                    });
+                });
+        })
+        .catch(err => {
+            //console.log(err)
+            res.status(500).json({
+                error: err
+            });
+        });
+}
+//push dispatch notes to invoice
+exports.dispatch_note = (req, res, next) => {
+    const id = req.params.id;
+    console.log("Dispatch Note", req.body.remarks)
+    const dispatchId = mongoose.Types.ObjectId()
+    const remarks = req.body.remarks
+    const arr = []
+    const date = new Date()
+    console.log(date)
+    arr.push(req.body.products)
+    //console.log(req.body)
+
+    const data = req.body.products
+    Invoices.update({ _id: req.params.id }, {
+        $push: {
+            dispatchNotes: { dispatchId, date, remarks, data }
+        }
+    })
+        .exec()
+        .then(result => {
+            Invoices.findById(id)
+                .then(docs => {
+                    console.log("Dis note", docs)
                     res.status(200).json(docs);
                 })
                 .catch(err => {
@@ -257,8 +296,7 @@ exports.search_invoices = (req, res, next) => {
 
     const startDate = moment(req.body.formValues.startDate).format('MM/DD/YYYY')
     const endDate = moment(req.body.formValues.endDate).format('MM/DD/YYYY')
-    const haveReturns = req.body.formValues.haveReturns
-    console.log("formValues", haveReturns)
+    const searchText = req.body.formValues.searchText
     Invoices.aggregate(
         [{
             '$lookup': {
@@ -426,7 +464,7 @@ exports.print_invoice = (req, res, next) => {
                         doc.text(`Cheques to be written in favour of "Lifeguard Manufacturing (Pvt) Ltd"`, 50,
                             680,
                             { align: "center", width: 500 });
-                        doc.text(`This is system generate document. No sign required"`, 50,
+                        doc.text(`This is a system generated document. No sign required"`, 50,
                             695,
                             { align: "center", width: 500 });
                     }
@@ -535,29 +573,37 @@ exports.print_invoice = (req, res, next) => {
                         .lineTo(550, y)
                         .stroke();
                 }
+                function generateHrBottom(doc, y) {
+                    doc
+                        .strokeColor("#aaaaaa")
+                        .lineWidth(1)
+                        .moveTo(490, y)
+                        .lineTo(550, y)
+                        .stroke();
+                }
                 //generate table row
-                function generateTableRow(doc, y, productCode, productName, uom, quantity, rate, discount, total) {
+                function generateTableRow(doc, y, productCode, productName, uom, quantity, rate, discount, discountAmount, total) {
                     doc
                         .font("Helvetica")
                         .fontSize(9)
                         .text(productCode, 50, y, { width: 50 })
                         .text(productName, 90, y, { width: 180 })
-                        .text(uom, 270, y, { width: 40, align: "right" })
-                        .text(quantity, 300, y, { width: 60, align: "right" })
-                        .text(rate, 350, y, { width: 50, align: "right" })
-                        .text(discount, 400, y, { width: 50, align: "right" })
+                        .text(quantity, 250, y, { width: 60, align: "right" })
+                        .text(rate, 300, y, { width: 60, align: "right" })
+                        .text(discount, 350, y, { width: 50, align: "right" })
+                        .text(discountAmount, 400, y, { width: 70, align: "right" })
                         .text(total, 0, y, { align: "right" });
                 }
-                function generateTableRowTop(doc, y, productCode, productName, uom, quantity, rate, discount, total) {
+                function generateTableRowTop(doc, y, productCode, productName, quantity, rate, discount, discountAmount, total) {
                     doc
                         .font("Helvetica-Bold")
                         .fontSize(9)
                         .text(productCode, 50, y, { width: 50 })
                         .text(productName, 90, y, { width: 180 })
-                        .text(uom, 270, y, { width: 40, align: "right" })
-                        .text(quantity, 300, y, { width: 60, align: "right" })
-                        .text(rate, 350, y, { width: 50, align: "right" })
-                        .text(discount, 400, y, { width: 50, align: "right" })
+                        .text(quantity, 250, y, { width: 60, align: "right" })
+                        .text(rate, 300, y, { width: 60, align: "right" })
+                        .text(discount, 350, y, { width: 50, align: "right" })
+                        .text(discountAmount, 400, y, { width: 70, align: "right" })
                         .text(total, 0, y, { align: "right" });
                 }
                 function formatNumber(num) {
@@ -594,14 +640,6 @@ exports.print_invoice = (req, res, next) => {
                     })
                     return getTotal
                 }
-                function getCurrency(result) {
-
-                    const getCurrency = result.map(data => {
-                        const currency = data.products[0]
-                        return currency.currency
-                    })
-                    return getCurrency
-                }
 
                 //generate invoice table
                 function generateInvoiceTable(doc, result) {
@@ -615,16 +653,16 @@ exports.print_invoice = (req, res, next) => {
                         const quantities = data.products.map(data => {
                             return data
                         })
-                        doc.font("Helvetica")
+
                         generateTableRowTop(
                             doc,
                             invoiceTableTop,
                             "Code",
                             "Name",
-                            "UOM",
                             "Quantity",
                             "Rate",
-                            "Discount",
+                            "Dis(%)",
+                            "Dis Amount",
                             "Total"
                         );
                         generateHr(doc, invoiceTableTop + 20);
@@ -636,6 +674,7 @@ exports.print_invoice = (req, res, next) => {
                                 let totalValue = product.sellingPrice * quantity.quantity
                                 let discount = (100 - quantity.discount) / 100
                                 let discountValue = totalValue * discount
+                                let discountAmount = totalValue - discountValue
                                 let rate = product.sellingPrice
                                 generateTableRow(
                                     doc,
@@ -646,6 +685,7 @@ exports.print_invoice = (req, res, next) => {
                                     quantity.quantity,
                                     rate,
                                     `${quantity.discount}%`,
+                                    formatNumber(discountAmount.toFixed(2)),
                                     formatNumber(discountValue.toFixed(2))
                                 );
                                 generateHr(doc, position + 23);
@@ -661,12 +701,299 @@ exports.print_invoice = (req, res, next) => {
                             "",
                             "",
                             "",
+                            "",
                             "Subtotal",
                             getSubTotal(result)
                         );
                         const position = invoiceTableTop + (i + 1) * 30;
-                        generateHr(doc, position + 20);
-                        generateHr(doc, position + 22);
+                        generateHrBottom(doc, position + 20);
+                        generateHrBottom(doc, position + 22);
+                    })
+                }
+            } else {
+                res.status(404).json({ message: "No valid ID found" })
+            }
+        })
+        .catch(err => {
+            res.status(500).json({
+                error: err
+            });
+        })
+}
+// Print Dispatch Note 
+exports.print_dispatch_note = (req, res, next) => {
+    console.log("Dispatch ID", req.params.dispatchId)
+    Invoices.aggregate(
+        [
+            {
+                '$match': {
+                    id: req.params.id
+                }
+            },
+            {
+                '$lookup': {
+                    from: 'customermasters',
+                    localField: 'customerId',
+                    foreignField: 'id',
+                    as: 'customer'
+                }
+            },
+            {
+                '$lookup': {
+                    from: 'quotations',
+                    localField: 'quotationNumber',
+                    foreignField: 'id',
+                    as: 'quotation'
+                }
+            },
+            {
+                '$lookup': {
+                    from: 'finishgoodsmasters',
+                    let: { productId: "$products.id" },
+                    pipeline: [
+                        {
+                            $match: {
+                                "$expr": { "$in": ["$id", "$$productId"] }
+                            }
+                        },
+                        {
+                            "$addFields": {
+                                "sort": {
+                                    "$indexOfArray": ["$$productId", "$id"]
+                                }
+                            }
+                        },
+                        { "$sort": { "sort": 1 } },
+                        { "$addFields": { "sort": "$$REMOVE" } }
+                    ],
+                    as: 'productsList'
+                }
+            }]
+    )
+        .exec()
+        .then(result => {
+            const data = result
+            if (result) {
+
+                createInvoice(result, "./invoice.pdf")
+                //generate empty pdf
+                function createInvoice(result, path) {
+                    console.log(result.products)
+                    let i;
+                    let end;
+                    let doc = new PDFDocument({ bufferPages: true });
+                    let buffers = [];
+                    doc.on('data', buffers.push.bind(buffers));
+                    doc.on('end', () => {
+
+                        let pdfData = Buffer.concat(buffers);
+                        res.writeHead(200, {
+                            'Content-Length': Buffer.byteLength(pdfData),
+                            'Content-Type': 'application/pdf;',
+                            'Accept': 'application/pdf',
+                            'Content-Disposition': 'attachment;filename=invoice.pdf',
+                        })
+                            .end(pdfData);
+
+                    });
+                    // doc.image('logo.jpg', { width: 150, height: 150 })
+                    generateHeader(doc)
+                    //generateFooter(doc)
+                    generateCustomerInformation(doc, result)
+                    generateInvoiceTable(doc, result);
+                    // see the range of buffered pages
+                    const range = doc.bufferedPageRange(); // => { start: 0, count: 2 }
+                    //set page numbering
+                    for (i = range.start, end = range.start + range.count, range.start <= end; i < end; i++) {
+                        doc.switchToPage(i);
+                        doc.font("Helvetica")
+                        doc.fontSize(7)
+                        doc.text(`Page ${i + 1} of ${range.count}`, 50,
+                            710,
+                            { align: "center", width: 500 });
+                    }
+                    //set userName 
+                    for (i = range.start, end = range.start + range.count, range.start <= end; i < end; i++) {
+                        doc.switchToPage(i);
+                        doc.font("Helvetica")
+                        doc.fontSize(8)
+                        doc.text(`Cheques to be written in favour of "Lifeguard Manufacturing (Pvt) Ltd"`, 50,
+                            680,
+                            { align: "center", width: 500 });
+                        doc.text(`This is a system generated document. No sign required"`, 50,
+                            695,
+                            { align: "center", width: 500 });
+                    }
+                    // manually flush pages that have been buffered
+                    doc.flushPages();
+                    //doc.pipe(res)
+                    //console.log(res)
+                    doc.end();
+
+                }
+                //generate pdf header
+                function generateHeader(doc) {
+                    doc
+                        .image('controllers/sales/logo.png', 40, 40, { width: 100 })
+                        .fillColor("#444444")
+                        .fontSize(18)
+                        .text("Lifeguard Manufacturing (Pvt) Ltd", 155, 80)
+                        .fontSize(10)
+                        .text("No:114/1/12,", 200, 65, { align: "right" })
+                        .text("Maharagama Road,", 200, 80, { align: "right" })
+                        .text("Piliyandala, Sri Lanka", 200, 95, { align: "right" })
+                        .text("+94 0112 617 711", 200, 110, { align: "right" })
+                        .moveDown();
+                }
+                
+                //generate customer information
+                function generateCustomerInformation(doc, result) {
+                    const results = result.map(data => {
+                        const companyName = data.customer.map(customer => {
+                            return customer.companyName
+                        })
+                        const mobileNo1 = data.customer.map(customer => {
+                            return customer.mobileNo1
+                        })
+                        const email = data.customer.map(customer => {
+                            return customer.email
+                        })
+                        const address = data.customer.map(address => {
+                            return address.communicationAddress
+                        })
+                        const no = address.map(no => {
+                            return no.no
+                        })
+                        const lane = address.map(lane => {
+                            return lane.lane
+                        })
+                        const city = address.map(city => {
+                            return city.city
+                        })
+                        const country = address.map(country => {
+                            return country.country
+                        })
+                        const postalCode = address.map(postalCode => {
+                            return postalCode.postalCode
+                        })
+                        const allDispatchNotes = data.dispatchNotes
+
+                        const filteredDispatchNote = allDispatchNotes.filter(note => note.dispatchId == req.params.dispatchId);
+                        const dispatchNote = filteredDispatchNote[0]
+                        doc
+                            .fillColor("#444444")
+                            .fontSize(15)
+                            .text("Dispatch Note", 50, 160);
+
+                        generateHr(doc, 185);
+
+                        doc
+                            .fontSize(10)
+                            .font("Helvetica-Bold")
+                            .text(`Invoice Number: ${data.invoiceNumber}`, 50, 200)
+                            .text(`Invoice Date: ${moment(data.date).format('DD/MM/YYYY')}`, 50, 215)
+                            .text(`Dispatched Date: ${moment(dispatchNote.date).format('DD/MM/YYYY')}`, 50, 230)
+                            .text(`Remarks: ${dispatchNote.remarks}`, 50, 245)
+                            .text(`${companyName}`, 350, 200)
+                            .font("Helvetica")
+                            .text(`${no},${lane}`, 350, 215)
+                            .text(`${city}, ${country}, ${postalCode}`, 350, 230)
+                            .text(`${email}`, 350, 245)
+                            .text(`${mobileNo1}`, 350, 260)
+                            .moveDown();
+
+                        generateHr(doc, 285);
+                    })
+
+                }
+                function generateHr(doc, y) {
+                    doc
+                        .strokeColor("#aaaaaa")
+                        .lineWidth(1)
+                        .moveTo(50, y)
+                        .lineTo(550, y)
+                        .stroke();
+                }
+                function generateHrBottom(doc, y) {
+                    doc
+                        .strokeColor("#aaaaaa")
+                        .lineWidth(1)
+                        .moveTo(490, y)
+                        .lineTo(550, y)
+                        .stroke();
+                }
+                //generate table row
+                function generateTableRow(doc, y, productCode, productName, uom, quantity, rate, discount, discountAmount, total) {
+                    doc
+                        .font("Helvetica")
+                        .fontSize(9)
+                        .text(productCode, 50, y, { width: 50 })
+                        .text(productName, 90, y, { width: 250 })
+                        .text(quantity, 0, y, { align: "right" });
+                }
+                function generateTableRowTop(doc, y, productCode, productName, quantity, rate, discount, discountAmount, total) {
+                    doc
+                        .font("Helvetica-Bold")
+                        .fontSize(9)
+                        .text(productCode, 50, y, { width: 50 })
+                        .text(productName, 90, y, { width: 180 })
+                        .text(quantity, 0, y, { align: "right" });
+
+                }
+                function formatNumber(num) {
+                    return num.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,")
+                }
+                
+
+                //generate invoice table
+                function generateInvoiceTable(doc, result) {
+
+                    const productTable = result.map(data => {
+                        let i,
+                            invoiceTableTop = 295;
+                        const products = data.productsList.map(data => {
+                            return data
+                        })                        
+                        const allDispatchNotes = data.dispatchNotes
+                       
+                        const filteredDispatchNote = allDispatchNotes.filter(note => note.dispatchId == req.params.dispatchId);
+                      
+                        const quantities = filteredDispatchNote.map(note=>{
+                            return note.data
+                        })
+                        
+                        const qu2 = quantities[0].map(quan => {
+                            return quan
+                        })
+                        generateTableRowTop(
+                            doc,
+                            invoiceTableTop,
+                            "Code",
+                            "Product Name",
+                            "Quantity"
+                        );
+                        generateHr(doc, invoiceTableTop + 20);
+                        for (i = 0; i < products.length; i++) {
+                            for (let index = 0; index < qu2.length; index++) {
+                                const product = products[i];
+                                const quantity = qu2[i]
+                                const position = invoiceTableTop + (i + 1) * 30;
+                                
+                                generateTableRow(
+                                    doc,
+                                    position,
+                                    `FG${product.productCode}`,
+                                    product.productName,
+                                    product.baseUnitMeasure,
+                                    quantity.quantity
+                                );
+                                generateHr(doc, position + 18);
+
+                            }
+                        }
+                        const subtotalPosition = invoiceTableTop + (i + 1) * 23;
+                        
+                        const position = invoiceTableTop + (i + 1) * 30;
                     })
                 }
             } else {

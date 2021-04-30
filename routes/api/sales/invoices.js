@@ -6,17 +6,21 @@ const { check, validationResult } = require('express-validator')
 const InvoicesController = require('../../../controllers/sales/invoices')
 //New purchase order
 router.post('/new-invoice', InvoicesController.add_new_invoice);
-//All purchase orders
+//All Invoices
 router.get('/all-invoices', InvoicesController.all_invoices);
-//Get single purchase order
+//Get single Invoice
 router.get('/single-invoice/:id', InvoicesController.single_invoice);
-//Update purchase order
+//Update Invoice
 router.patch('/update-invoice/:id', InvoicesController.update_invoice);
-//Delete purchase order
+//Create and update dispatch note
+router.patch('/update-dispatch-note/:id', InvoicesController.dispatch_note);
+//Delete Invoice
 router.delete('/delete-invoice/:id', InvoicesController.delete_invoice);
 //Search
 router.post('/search-invoices/', InvoicesController.search_invoices);
 //Print invoice
 router.get('/print-invoice/:id', InvoicesController.print_invoice);
+//Print dispatch note
+router.get('/print-print-dispatch-note/:id/:dispatchId', InvoicesController.print_dispatch_note);
 
 module.exports = router;
