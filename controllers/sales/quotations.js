@@ -1,4 +1,5 @@
 const Quotations = require('../../models/quotation/quotation');
+const Finishgoodsmasters = require('../../models/master/FinishGoodsMaster');
 const Count = require('../../models/counter/count');
 const mongoose = require('mongoose');
 const moment = require('moment');
@@ -23,28 +24,52 @@ exports.add_new_quotation = (req, res, next) => {
                 //return (moment(Date.now()).format('YYYY/MM') + ((Math.random() * 100000).toFixed()))
                 return "Q" + year.toString() + month.toString() + doc.seq
             }
-            //console.log(req.body, "Quotations")
-            const quotations = new Quotations({
-                id: mongoose.Types.ObjectId(),
-                customerId: req.body.customerId,
-                products: req.body.products,
-                quotation_state: "Pending",
-                userId: req.body.user.user.userId,
-                userName: req.body.user.user.userName,
-                userRole: req.body.user.user.userRole,
-                quotationNumber: getQuotationNumber()
-            });
-            quotations.save()
-                .then(result => {
-                    //console.log(result);
-                })
-                .catch(err => console.log(err));
-            res.status(200).json({
-                //message: 'New Raw Material successfully created.',
-                quotations: quotations
+            const productIdList = [];
+
+            console.log("req.body.products.length ****", req.body.products.length)
+            for (let i = 0; i < req.body.products.length; i++) {
+                productIdList.push(mongoose.Types.ObjectId(req.body.products[i].id));
+
+            }
+            console.log("productIdList1 ****** ", productIdList);
+
+
+            Finishgoodsmasters.find({
+                'id': {
+                    $in: productIdList
+                }
+            }, function (err, docs) {
+                this.productIdList = docs;
+                console.log("productListResponse1 ******* ", this.productIdList);
+
+                for (let i = 0; i < req.body.products.length; i++) {
+                    req.body.products[i].sellingPrice = this.productIdList[i].sellingPrice;
+                }
+
+                console.log("productListResponse2 ******* ", req.body.products);
+                //console.log(req.body, "Quotations")
+                const quotations = new Quotations({
+                    id: mongoose.Types.ObjectId(),
+                    customerId: req.body.customerId,
+                    products: req.body.products,
+                    quotation_state: "Pending",
+                    userId: req.body.user.user.userId,
+                    userName: req.body.user.user.userName,
+                    userRole: req.body.user.user.userRole,
+                    quotationNumber: getQuotationNumber()
+                });
+                quotations.save()
+                    .then(result => {
+                        res.status(200).json(result);
+                    })
+                    .catch(err => {
+                        res.status(500).json({
+                            error: err
+                        })
+                    });
             });
         }
-    });
+    })
 }
 // Count.findOneAndUpdate({ id: 'quotationNo' }, { $inc: { seq: 1 } }, { "new": true }, (error, doc) => {
 //     // error: any errors that occurred
@@ -373,7 +398,7 @@ exports.print_quotation = (req, res, next) => {
                 createQuotaion(result, "./quotation.pdf")
                 //generate empty pdf
                 function createQuotaion(result, path) {
-                    console.log(result,"Full result")
+                    console.log(result, "Full result")
                     let i;
                     let end;
                     let doc = new PDFDocument({ bufferPages: true });
@@ -456,17 +481,17 @@ exports.print_quotation = (req, res, next) => {
                 function generateCustomerInformation(doc, result) {
                     const results = result.map(data => {
                         console.log(data.customerDetails)
-                        const companyName = data.customerDetails.map(customer => {                         
+                        const companyName = data.customerDetails.map(customer => {
                             return customer.companyName
                         })
                         const mobileNo1 = data.customerDetails.map(customer => {
-                         
+
                             return customer.mobileNo1
                         })
                         const email = data.customerDetails.map(customer => {
                             return customer.email
                         })
-                        const address = data.customerDetails.map(address => {                           
+                        const address = data.customerDetails.map(address => {
                             return address.communicationAddress
                         })
                         const creditPeriod = data.customerDetails.map(creditPeriod => {
@@ -523,10 +548,18 @@ exports.print_quotation = (req, res, next) => {
                         .lineTo(550, y)
                         .stroke();
                 }
+                function generateHrBottom(doc, y) {
+                    doc
+                        .strokeColor("#aaaaaa")
+                        .lineWidth(1)
+                        .moveTo(490, y)
+                        .lineTo(550, y)
+                        .stroke();
+                }
                 //generate table row
                 function generateTableRow(doc, y, productCode, productName, uom, quantity, rate, discount, total) {
                     doc
-                        .font("Helvetica")
+                        .font("Courier")
                         .fontSize(9)
                         .text(productCode, 50, y, { width: 50 })
                         .text(productName, 90, y, { width: 180 })
@@ -534,7 +567,30 @@ exports.print_quotation = (req, res, next) => {
                         .text(quantity, 300, y, { width: 60, align: "right" })
                         .text(rate, 350, y, { width: 50, align: "right" })
                         .text(discount, 400, y, { width: 50, align: "right" })
+                        .text(total, 0, y, { align: "right" });
+                }
+                function generateTableBottom(doc, y, productCode, productName, uom, quantity, rate, discount, discountAmount, total) {
+                    doc
                         .font("Helvetica-Bold")
+                        .fontSize(9)
+                        .text(productCode, 50, y, { width: 50 })
+                        .text(productName, 90, y, { width: 180 })
+                        .text(quantity, 250, y, { width: 60, align: "right" })
+                        .text(rate, 300, y, { width: 60, align: "right" })
+                        .text(discount, 350, y, { width: 50, align: "right" })
+                        .text(discountAmount, 400, y, { width: 70, align: "right" })
+                        .text(total, 0, y, { align: "right" });
+                }
+                function generateTableRowTop(doc, y, productCode, productName, quantity, rate, discount, discountAmount, total) {
+                    doc
+                        .font("Helvetica-Bold")
+                        .fontSize(9)
+                        .text(productCode, 50, y, { width: 50 })
+                        .text(productName, 90, y, { width: 180 })
+                        .text(quantity, 250, y, { width: 60, align: "right" })
+                        .text(rate, 300, y, { width: 60, align: "right" })
+                        .text(discount, 350, y, { width: 50, align: "right" })
+                        .text(discountAmount, 400, y, { width: 70, align: "right" })
                         .text(total, 0, y, { align: "right" });
                 }
                 function formatNumber(num) {
@@ -551,12 +607,12 @@ exports.print_quotation = (req, res, next) => {
                             //console.log("discount", data.discount)
                             return data.discount
                         })
-                        const rates = data.productsList.map(data => {
+                        const rates = data.products.map(data => {
                             //console.log("rate", data.sellingPrice)
                             return data.sellingPrice
                         })
                         let totalValue = []
-                        for (let i = 0; i < Math.min(quantities.length, rates.length, discounts.length); i++) {
+                        for (let i = 0; i < Math.min(quantities.length); i++) {
                             let quantity = quantities[i]
                             let discount = discounts[i]
                             let rate = rates[i]
@@ -585,14 +641,14 @@ exports.print_quotation = (req, res, next) => {
                     const productTable = result.map(data => {
                         let i,
                             quotationTableTop = 290;
-                        const products = data.productsList.map(data => {
+                        const productsInfo = data.productsList.map(data => {
                             return data
                         })
-                        const quantities = data.products.map(data => {
+                        const productsDetails = data.products.map(data => {
                             return data
                         })
                         doc.font("Helvetica")
-                        generateTableRow(
+                        generateTableRowTop(
                             doc,
                             quotationTableTop,
                             "Code",
@@ -605,15 +661,15 @@ exports.print_quotation = (req, res, next) => {
                         );
                         generateHr(doc, quotationTableTop + 20);
                         doc.font("Helvetica")
-                        for (i = 0; i < products.length; i++) {
-                            for (let index = 0; index < quantities.length; index++) {
-                                const product = products[i];
-                                const quantity = quantities[i]
+                        for (i = 0; i < productsInfo.length; i++) {
+                            for (let index = 0; index < productsDetails.length; index++) {
+                                const product = productsInfo[i];
+                                const quantity = productsDetails[i]
                                 const position = quotationTableTop + (i + 1) * 30;
-                                let totalValue = product.sellingPrice * quantity.quantity
+                                let totalValue = quantity.sellingPrice * quantity.quantity
                                 let discount = (100 - quantity.discount) / 100
                                 let discountValue = totalValue * discount
-                                let rate = product.sellingPrice
+                                let rate = quantity.sellingPrice
                                 generateTableRow(
                                     doc,
                                     position,
@@ -629,9 +685,10 @@ exports.print_quotation = (req, res, next) => {
                             }
                         }
                         const subtotalPosition = quotationTableTop + (i + 1) * 30;
-                        generateTableRow(
+                        generateTableBottom(
                             doc,
                             subtotalPosition,
+                            "",
                             "",
                             "",
                             "",
@@ -641,8 +698,8 @@ exports.print_quotation = (req, res, next) => {
                             getSubTotal(result)
                         );
                         const position = quotationTableTop + (i + 1) * 30;
-                        generateHr(doc, position + 20);
-                        generateHr(doc, position + 22);
+                        generateHrBottom(doc, position + 20);
+                        generateHrBottom(doc, position + 22);
                     })
                 }
             } else {

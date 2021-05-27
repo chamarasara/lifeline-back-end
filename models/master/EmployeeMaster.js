@@ -31,6 +31,7 @@ const EmployeeMasterShema = new mongoose.Schema({
     telephoneAllowance: { type: Number, default: 0 },
     fuelAllowance: { type: Number, default: 0 },
     foodAllowance: { type: Number, default: 0 },
+    overTimeRate: { type: Number, default: 0 },
     accommodationAllowance: { type: Number, default: 0 },
     accomodationEmployee: { type: Number, default: 0 },
     bonus: { type: Number, default: 0 },

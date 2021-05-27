@@ -164,7 +164,7 @@ exports.delete_purchase_order_packing = (req, res, next) => {
 exports.search_purchase_orders_packing = (req, res, next) => {
     const startDate = moment(req.body.formValues.startDate).format('YYYY/MM/DD')
     const endDate = moment(req.body.formValues.endDate).format('YYYY/MM/DD')
-    console.log("dates", startDate, " ", endDate)
+    //console.log("dates", startDate, " ", endDate)
     PurchaseOrdersPacking.aggregate(
         [
             {
@@ -267,7 +267,7 @@ exports.print_purchase_orders_packing = (req, res, next) => {
                     generateHeader(doc)
                     //generateFooter(doc)
                     generateSupplierInformation(doc, result)
-                    generateOrderTable(doc, result);
+                    //generateOrderTable(doc, result);
                     // see the range of buffered pages
                     const range = doc.bufferedPageRange(); // => { start: 0, count: 2 }
                     //set page numbering
@@ -372,6 +372,14 @@ exports.print_purchase_orders_packing = (req, res, next) => {
                         .lineTo(550, y)
                         .stroke();
                 }
+                function generateHrBottom(doc, y) {
+                    doc
+                        .strokeColor("#aaaaaa")
+                        .lineWidth(1)
+                        .moveTo(490, y)
+                        .lineTo(550, y)
+                        .stroke();
+                }
                 //generate table row
                 function generateTableRow(doc, y, productCode, productName, uom, quantity) {
 
@@ -382,6 +390,31 @@ exports.print_purchase_orders_packing = (req, res, next) => {
                         .text(productName, 90, y)
                         .text(uom, 380, y, { width: 50, align: "right" })
                         .text(quantity, 470, y, { width: 50, align: "right" })
+                }
+                function generateTableRowTop(doc, y, productCode, productName, uom, quantity, rate, discount, total) {
+                    doc
+                        .font("Helvetica-Bold")
+                        .fontSize(9)
+                        .text(productCode, 50, y, { width: 50 })
+                        .text(productName, 90, y, { width: 180 })
+                        .text(uom, 270, y, { width: 40, align: "right" })
+                        .text(quantity, 300, y, { width: 60, align: "right" })
+                        .text(rate, 350, y, { width: 50, align: "right" })
+                        .text(discount, 400, y, { width: 50, align: "right" })
+                        .font("Helvetica-Bold")
+                        .text(total, 0, y, { align: "right" });
+                }
+                function generateTableBottom(doc, y, productCode, productName, uom, quantity, rate, discount, discountAmount, total) {
+                    doc
+                        .font("Helvetica-Bold")
+                        .fontSize(9)
+                        .text(productCode, 50, y, { width: 50 })
+                        .text(productName, 90, y, { width: 180 })
+                        .text(quantity, 250, y, { width: 60, align: "right" })
+                        .text(rate, 300, y, { width: 60, align: "right" })
+                        .text(discount, 350, y, { width: 50, align: "right" })
+                        .text(discountAmount, 400, y, { width: 70, align: "right" })
+                        .text(total, 0, y, { align: "right" });
                 }
                 // function getSubTotal(result) {
 
@@ -417,8 +450,8 @@ exports.print_purchase_orders_packing = (req, res, next) => {
                         const quantities = data.packingMaterials.map(data => {
                             return data
                         })
-                        doc.font("Helvetica-Bold")
-                        generateTableRow(
+                        
+                        generateTableRowTop(
                             doc,
                             orderTableTop,
                             "Code",
@@ -445,7 +478,7 @@ exports.print_purchase_orders_packing = (req, res, next) => {
                             }
                         }
                         const subtotalPosition = orderTableTop + (i + 1) * 30;
-                        generateTableRow(
+                        generateTableBottom(
                             doc,
                             subtotalPosition,
                             "",
@@ -454,7 +487,9 @@ exports.print_purchase_orders_packing = (req, res, next) => {
 
                             //getSubTotal(result)
                         );
-
+                        const position = invoiceTableTop + (i + 1) * 30;
+                        generateHrBottom(doc, position + 20);
+                        generateHrBottom(doc, position + 22);
                     })
                 }
             } else {

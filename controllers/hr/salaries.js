@@ -1,5 +1,6 @@
 const Count = require('../../models/counter/count');
 const Salaries = require('../../models/hr/Salaries');
+const EmployeeMaster = require('../../models/master/EmployeeMaster')
 const mongoose = require('mongoose');
 const moment = require('moment');
 const PDFDocument = require("pdfkit");
@@ -18,31 +19,53 @@ exports.add_new_salary = (req, res, next) => {
                 const month = date.getMonth() + 1
                 return "SAL" + year.toString() + month.toString() + doc.seq
             }
+            EmployeeMaster.find({ 'id': req.body.employeeId },
+                function (err, docs) {
 
-            const salaries = new Salaries({
-                id: mongoose.Types.ObjectId(),
-                referanceNumber: getReferanceNumber(),
-                employeeId: req.body.employeeId,
-                month: req.body.month,
-                overTimeHours: req.body.overTimeHours,
-                overTimeRate: req.body.overTimeRate,
-                attendanceAllowance: req.body.attendanceAllowance,
-                loanRecovery: req.body.loanRecovery,
-                stampDuty: req.body.stampDuty,
-                noPay: req.body.noPay,
-                userId: req.body.user.user.userId,
-                userName: req.body.user.user.userName,
-                userRole: req.body.user.user.userRole
-            });
-            salaries.save()
-                .then(result => {
-                    console.log("Result", result)
-                })
-                .catch(err => console.log(err));
-            res.status(200).json({
-                //message: 'New Raw Material successfully created.',
-                salaries: salaries
-            });
+                    const employeeData = docs[0]
+
+                    const salaries = new Salaries({
+                        id: mongoose.Types.ObjectId(),
+                        referanceNumber: getReferanceNumber(),
+                        employeeId: req.body.employeeId,
+                        month: req.body.month,
+                        overTimeHours: req.body.overTimeHours,
+                        overTimeRate: employeeData.overTimeRate,
+                        attendanceAllowance: req.body.attendanceAllowance,
+                        basicSalary: employeeData.basicSalary,
+                        vehicleAllowance: employeeData.vehicleAllowance,
+                        transportAllowance: employeeData.transportAllowance,
+                        uniformCost: employeeData.uniformCost,
+                        insuaranceCost: employeeData.insuaranceCost,
+                        telephoneAllowance: employeeData.telephoneAllowance,
+                        fuelAllowance: employeeData.fuelAllowance,
+                        foodAllowance: employeeData.foodAllowance,
+                        accommodationAllowance: employeeData.accommodationAllowance,
+                        accomodationEmployee: employeeData.accomodationEmployee,
+                        bonus: employeeData.bonus,
+                        epfCompany: employeeData.epfCompany,
+                        epfEmployee: employeeData.epfEmployee,
+                        etfEmployee: employeeData.etfEmployee,
+                        loanRecovery: req.body.loanRecovery,
+                        stampDuty: req.body.stampDuty,
+                        salaryAdvance: req.body.salaryAdvance,
+                        noPay: req.body.noPay,
+                        userId: req.body.user.user.userId,
+                        userName: req.body.user.user.userName,
+                        userRole: req.body.user.user.userRole
+                    });
+                    salaries.save()
+                        .then(result => {
+                            console.log("Result", result)
+                        })
+                        .catch(err => console.log(err));
+                    res.status(200).json({
+                        //message: 'New Raw Material successfully created.',
+                        salaries: salaries
+                    });
+                }
+            )
+
         }
     })
 }
@@ -368,14 +391,14 @@ exports.print_salary = (req, res, next) => {
                 }
                 function generateTableRowTopRight(doc, y, c1, c2) {
                     doc
-                        .font("Helvetica-Bold")
+                        .font("Helvetica")
                         .fontSize(9)
                         .text(c1, 350, y, { width: 100 })
                         .text(c2, 450, y, { width: 100, align: "right" })
                 }
                 function generateTableRowBasicSalary(doc, y, c1, c2) {
                     doc
-                        .font("Helvetica")
+                        .font("Courier")
                         .fontSize(9)
                         .text(c1, 50, y, { width: 100 })
                         .text(c2, 150, y, { width: 100, align: "right" })
@@ -389,21 +412,21 @@ exports.print_salary = (req, res, next) => {
                 }
                 function generateTableRow(doc, y, c1, c2) {
                     doc
-                        .font("Helvetica-Bold")
+                        .font("Helvetica")
                         .fontSize(9)
                         .text(c1, 50, y, { width: 200 })
                         .text(c2, 150, y, { width: 100, align: "right" })
                 }
                 function generateTableRowSubItem(doc, y, c1, c2) {
                     doc
-                        .font("Helvetica")
+                        .font("Courier")
                         .fontSize(9)
                         .text(c1, 70, y, { width: 200 })
                         .text(c2, 150, y, { width: 100, align: "right" })
                 }
                 function generateTableRowSubItemRight(doc, y, c1, c2) {
                     doc
-                        .font("Helvetica")
+                        .font("Courier")
                         .fontSize(9)
                         .text(c1, 350, y, { width: 200 })
                         .text(c2, 450, y, { width: 100, align: "right" })
@@ -433,7 +456,7 @@ exports.print_salary = (req, res, next) => {
                             doc,
                             salaryTableTop + 15,
                             "Basic Salary",
-                            formatNumber(basicSalary[0].toFixed(2))
+                            formatNumber(data.basicSalary.toFixed(2))
                         );
 
                         generateTableRow(
@@ -450,7 +473,7 @@ exports.print_salary = (req, res, next) => {
                             doc,
                             salaryTableTop + 45,
                             "Vehicle Allowance",
-                            formatNumber(vehicleAllowance[0].toFixed(2))
+                            formatNumber(data.vehicleAllowance.toFixed(2))
                         );
 
                         const fuelAllowance = data.employeeDetails.map(employee => {
@@ -460,7 +483,7 @@ exports.print_salary = (req, res, next) => {
                             doc,
                             salaryTableTop + 55,
                             "Fuel Allowance",
-                            formatNumber(fuelAllowance[0].toFixed(2))
+                            formatNumber(data.fuelAllowance.toFixed(2))
                         );
 
                         const transportAllowance = data.employeeDetails.map(employee => {
@@ -470,7 +493,7 @@ exports.print_salary = (req, res, next) => {
                             doc,
                             salaryTableTop + 65,
                             "Transport Allowance",
-                            formatNumber(transportAllowance[0].toFixed(2))
+                            formatNumber(data.transportAllowance.toFixed(2))
                         );
 
                         const telephoneAllowance = data.employeeDetails.map(employee => {
@@ -480,7 +503,7 @@ exports.print_salary = (req, res, next) => {
                             doc,
                             salaryTableTop + 75,
                             "Telephone Allowance",
-                            formatNumber(telephoneAllowance[0].toFixed(2))
+                            formatNumber(data.telephoneAllowance.toFixed(2))
                         );
 
                         const foodAllowance = data.employeeDetails.map(employee => {
@@ -490,7 +513,7 @@ exports.print_salary = (req, res, next) => {
                             doc,
                             salaryTableTop + 85,
                             "Food Allowance",
-                            formatNumber(foodAllowance[0].toFixed(2))
+                            formatNumber(data.foodAllowance.toFixed(2))
                         );
                         const accommodationAllowance = data.employeeDetails.map(employee => {
                             return employee.accommodationAllowance
@@ -499,7 +522,7 @@ exports.print_salary = (req, res, next) => {
                             doc,
                             salaryTableTop + 95,
                             "Accommodation Allowance",
-                            formatNumber(accommodationAllowance[0].toFixed(2))
+                            formatNumber(data.accommodationAllowance.toFixed(2))
                         );
 
                         const bonus = data.employeeDetails.map(employee => {
@@ -507,135 +530,123 @@ exports.print_salary = (req, res, next) => {
                         })
                         generateTableRow(
                             doc,
-                            salaryTableTop + 105,
+                            salaryTableTop + 110,
                             "Variable Allowances"
                         );
-                        for (i = 0; i < result.length; i++) {
-                            const item = result[i];
-                            const ot = item.overTimeHours * item.overTimeRate
-                            const position = invoiceTableTop + (i + 1) * 30;
-                            generateTableRowSubItem(
-                                doc,
-                                salaryTableTop + 125,
-                                "OT",
-                                formatNumber(ot.toFixed(2))
-                            );
-                        }
+
+                        const ot = data.overTimeHours * data.overTimeRate
                         generateTableRowSubItem(
                             doc,
-                            salaryTableTop + 135,
-                            "Bonus",
-                            formatNumber(bonus[0].toFixed(2))
+                            salaryTableTop + 122,
+                            "OT",
+                            formatNumber(ot.toFixed(2))
                         );
-                        for (i = 0; i < result.length; i++) {
-                            const item = result[i];
-                            const attendance = item.attendanceAllowance
-                            const position = invoiceTableTop + (i + 1) * 30;
-                            generateTableRowSubItem(
-                                doc,
-                                salaryTableTop + 145,
-                                "Attendance Allowance",
-                                formatNumber(attendance.toFixed(2))
-                            );
-                        }
+
+                        generateTableRowSubItem(
+                            doc,
+                            salaryTableTop + 132,
+                            "Bonus",
+                            formatNumber(data.bonus.toFixed(2))
+                        );
+
+                        generateTableRowSubItem(
+                            doc,
+                            salaryTableTop + 142,
+                            "Attendance Allowance",
+                            formatNumber(data.attendanceAllowance.toFixed(2))
+                        );
+
                         generateLineIncome(doc, 455)
-                        for (i = 0; i < result.length; i++) {
-                            const item = result[i];
-                            const ot = item.overTimeHours * item.overTimeRate
-                            const attendance = item.attendanceAllowance
-                            const total = basicSalary[0] + vehicleAllowance[0] + fuelAllowance[0] + transportAllowance[0] + telephoneAllowance[0] + foodAllowance[0] + accommodationAllowance[0] + bonus[0] + ot + attendance
-                            generateTableRow(
-                                doc,
-                                salaryTableTop + 158,
-                                "Gross Earnings",
-                                formatNumber(total.toFixed(2))
-                            );
-                        }
-                        for (i = 0; i < result.length; i++) {
-                            generateTableRow(
-                                doc,
-                                salaryTableTop + 172,
-                                "Deductions (-)"
-                            );
-                        }
+
+                        const total = data.basicSalary + data.vehicleAllowance + data.fuelAllowance + data.transportAllowance + data.telephoneAllowance + data.foodAllowance + data.accommodationAllowance + data.bonus +
+                            (data.overTimeHours * data.overTimeRate) + data.attendanceAllowance
+                        generateTableRow(
+                            doc,
+                            salaryTableTop + 158,
+                            "Gross Earnings",
+                            formatNumber(total.toFixed(2))
+                        );
+
+                        generateTableRow(
+                            doc,
+                            salaryTableTop + 172,
+                            "Deductions (-)"
+                        );
+
                         const epfEmployee = data.employeeDetails.map(employee => {
                             return employee.epfEmployee
                         })
-                        for (i = 0; i < result.length; i++) {
-                            generateTableRowSubItem(
-                                doc,
-                                salaryTableTop + 185,
-                                "EPF 8% Employee",
-                                formatNumber(epfEmployee[0].toFixed(2))
-                            );
-                        }
+
+                        generateTableRowSubItem(
+                            doc,
+                            salaryTableTop + 185,
+                            "EPF 8% Employee",
+                            formatNumber(data.epfEmployee.toFixed(2))
+                        );
+
                         const accomodationEmployee = data.employeeDetails.map(employee => {
                             return employee.accomodationEmployee
                         })
-                        for (i = 0; i < result.length; i++) {
-                            generateTableRowSubItem(
-                                doc,
-                                salaryTableTop + 195,
-                                "Accomodation ",
-                                formatNumber(accomodationEmployee[0].toFixed(2))
-                            );
-                        }
-                        for (i = 0; i < result.length; i++) {
-                            const item = result[i];
-                            const position = invoiceTableTop + (i + 1) * 30;
-                            generateTableRowSubItem(
-                                doc,
-                                salaryTableTop + 205,
-                                "Loan Recovery",
-                                formatNumber(item.loanRecovery.toFixed(2))
-                            );
-                        }
-                        for (i = 0; i < result.length; i++) {
-                            const item = result[i];
-                            const position = invoiceTableTop + (i + 1) * 30;
-                            generateTableRowSubItem(
-                                doc,
-                                salaryTableTop + 215,
-                                "Stamp Duty",
-                                formatNumber(item.stampDuty.toFixed(2))
-                            );
-                        }
-                        for (i = 0; i < result.length; i++) {
-                            const item = result[i];
-                            const position = invoiceTableTop + (i + 1) * 30;
-                            generateTableRowSubItem(
-                                doc,
-                                salaryTableTop + 225,
-                                "No Pay",
-                                formatNumber(item.noPay.toFixed(2))
-                            );
-                        }
-                        generateLineIncome(doc, 535)
-                        for (i = 0; i < result.length; i++) {
-                            const item = result[i];
-                            const total = epfEmployee[0] + accomodationEmployee[0] + item.loanRecovery + item.stampDuty + item.noPay
-                            generateTableRow(
-                                doc,
-                                salaryTableTop + 240,
-                                "Total Deductions ",
-                                `(${formatNumber(total.toFixed(2))})`
-                            );
-                        }
-                        generateLineIncome(doc, 552)
-                        for (i = 0; i < result.length; i++) {
-                            const item = result[i];
-                            const ot = item.overTimeHours * item.overTimeRate
-                            const attendance = item.attendanceAllowance
-                            const total = (basicSalary[0] + vehicleAllowance[0] + fuelAllowance[0] + transportAllowance[0] + telephoneAllowance[0] + foodAllowance[0] + accommodationAllowance[0] + bonus[0] + ot + attendance) - (epfEmployee[0] + accomodationEmployee[0] + item.loanRecovery + item.stampDuty + item.noPay)
-                            generateTableRow(
-                                doc,
-                                salaryTableTop + 256,
-                                "Net Earning ",
-                                formatNumber(total.toFixed(2))
-                            );
-                        }
-                        generateLineIncome(doc, 567)
-                        generateLineIncome(doc, 569)
+
+                        generateTableRowSubItem(
+                            doc,
+                            salaryTableTop + 195,
+                            "Accomodation ",
+                            formatNumber(data.accomodationEmployee.toFixed(2))
+                        );
+
+
+                        generateTableRowSubItem(
+                            doc,
+                            salaryTableTop + 205,
+                            "Loan Recovery",
+                            formatNumber(data.loanRecovery.toFixed(2))
+                        );
+
+                        generateTableRowSubItem(
+                            doc,
+                            salaryTableTop + 215,
+                            "Salary Advance Recovery",
+                            formatNumber(data.salaryAdvance.toFixed(2))
+                        );
+
+                        generateTableRowSubItem(
+                            doc,
+                            salaryTableTop + 225,
+                            "Stamp Duty",
+                            formatNumber(data.stampDuty.toFixed(2))
+                        );
+
+                        generateTableRowSubItem(
+                            doc,
+                            salaryTableTop + 235,
+                            "No Pay",
+                            formatNumber(data.noPay.toFixed(2))
+                        );
+
+                        generateLineIncome(doc, 545)
+
+                        const totalDeductions = data.epfEmployee + data.accomodationEmployee + data.loanRecovery + data.stampDuty + data.noPay + data.salaryAdvance
+                        generateTableRow(
+                            doc,
+                            salaryTableTop + 250,
+                            "Total Deductions ",
+                            `(${formatNumber(totalDeductions.toFixed(2))})`
+                        );
+
+                        generateLineIncome(doc, 562)
+
+                        const netEarinings = (data.basicSalary + data.vehicleAllowance + data.fuelAllowance + data.transportAllowance + data.telephoneAllowance + data.foodAllowance + data.accommodationAllowance + data.bonus +
+                            (data.overTimeHours * data.overTimeRate) + data.attendanceAllowance) - (data.epfEmployee + data.accomodationEmployee + data.loanRecovery + data.stampDuty + data.noPay + data.salaryAdvance)
+                        generateTableRow(
+                            doc,
+                            salaryTableTop + 266,
+                            "Net Earning ",
+                            formatNumber(netEarinings.toFixed(2))
+                        );
+
+                        generateLineIncome(doc, 577)
+                        generateLineIncome(doc, 579)
                         for (i = 0; i < result.length; i++) {
                             const item = result[i];
                             const position = invoiceTableTop + (i + 1) * 30;
@@ -669,7 +680,7 @@ exports.print_salary = (req, res, next) => {
                                 doc,
                                 salaryTableTop + 30,
                                 "Uniform Allowance",
-                                formatNumber(uniformCost[0].toFixed(2))
+                                formatNumber(data.uniformCost.toFixed(2))
                             );
                         }
                         const epfCompany = data.employeeDetails.map(employee => {

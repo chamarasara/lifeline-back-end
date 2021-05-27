@@ -63,6 +63,7 @@ exports.add_new_employee = (req, res, next) => {
                 epfEmployee: req.body.epfEmployee,
                 etfEmployee: req.body.etfEmployee,
                 insuarancePolicyNumber: req.body.insuarancePolicyNumber,
+                overTimeRate: req.body.overTimeRate,
                 userId: req.body.user.user.userId,
                 userName: req.body.user.user.userName,
                 userRole: req.body.user.user.userRole

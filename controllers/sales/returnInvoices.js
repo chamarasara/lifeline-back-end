@@ -497,10 +497,18 @@ exports.print_return_invoice = (req, res, next) => {
                         .lineTo(550, y)
                         .stroke();
                 }
+                function generateHrBottom(doc, y) {
+                    doc
+                        .strokeColor("#aaaaaa")
+                        .lineWidth(1)
+                        .moveTo(490, y)
+                        .lineTo(550, y)
+                        .stroke();
+                }
                 //generate table row
                 function generateTableRow(doc, y, productCode, productName, uom, quantity, rate, discount, total) {
                     doc
-                        .font("Helvetica")
+                        .font("Courier")
                         .fontSize(9)
                         .text(productCode, 50, y, { width: 50 })
                         .text(productName, 90, y, { width: 180 })
@@ -523,6 +531,18 @@ exports.print_return_invoice = (req, res, next) => {
                         .font("Helvetica-Bold")
                         .text(total, 0, y, { align: "right" });
                 }
+                function generateTableBottom(doc, y, productCode, productName, uom, quantity, rate, discount, discountAmount, total) {
+                    doc
+                        .font("Helvetica-Bold")
+                        .fontSize(9)
+                        .text(productCode, 50, y, { width: 50 })
+                        .text(productName, 90, y, { width: 180 })
+                        .text(quantity, 250, y, { width: 60, align: "right" })
+                        .text(rate, 300, y, { width: 60, align: "right" })
+                        .text(discount, 350, y, { width: 50, align: "right" })
+                        .text(discountAmount, 400, y, { width: 70, align: "right" })
+                        .text(total, 0, y, { align: "right" });
+                }
                 function formatNumber(num) {
                     return num.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,")
                 }
@@ -537,12 +557,12 @@ exports.print_return_invoice = (req, res, next) => {
                             //console.log("discount", data.discount)
                             return data.discount
                         })
-                        const rates = data.productsList.map(data => {
+                        const rates = data.products.map(data => {
                             //console.log("rate", data.sellingPrice)
                             return data.sellingPrice
                         })
                         let totalValue = []
-                        for (let i = 0; i < Math.min(quantities.length, rates.length, discounts.length); i++) {
+                        for (let i = 0; i < Math.min(quantities.length); i++) {
                             let quantity = quantities[i]
                             let discount = discounts[i]
                             let rate = rates[i]
@@ -572,10 +592,10 @@ exports.print_return_invoice = (req, res, next) => {
                     const productTable = result.map(data => {
                         let i,
                             invoiceTableTop = 305;
-                        const products = data.productsList.map(data => {
+                        const productsInfo = data.productsList.map(data => {
                             return data
                         })
-                        const quantities = data.products.map(data => {
+                        const productsDetails = data.products.map(data => {
                             return data
                         })
                         doc.font("Helvetica-Bold")
@@ -591,15 +611,15 @@ exports.print_return_invoice = (req, res, next) => {
                             "Total"
                         );
                         generateHr(doc, invoiceTableTop + 20);
-                        for (i = 0; i < products.length; i++) {
-                            for (let index = 0; index < quantities.length; index++) {
-                                const product = products[i];
-                                const quantity = quantities[i]
+                        for (i = 0; i < productsInfo.length; i++) {
+                            for (let index = 0; index < productsDetails.length; index++) {
+                                const product = productsInfo[i];
+                                const quantity = productsDetails[i]
                                 const position = invoiceTableTop + (i + 1) * 30;
-                                let totalValue = product.sellingPrice * quantity.quantity
+                                let totalValue = quantity.sellingPrice * quantity.quantity
                                 let discount = (100 - quantity.discount) / 100
                                 let discountValue = totalValue * discount
-                                let rate = product.sellingPrice
+                                let rate = quantity.sellingPrice
                                 generateTableRow(
                                     doc,
                                     position,
@@ -617,9 +637,10 @@ exports.print_return_invoice = (req, res, next) => {
                         }
                         const subtotalPosition = invoiceTableTop + (i + 1) * 31;
                         doc.font("Helvetica-Bold")
-                        generateTableRow(
+                        generateTableBottom(
                             doc,
                             subtotalPosition,
+                            "",
                             "",
                             "",
                             "",
@@ -629,8 +650,8 @@ exports.print_return_invoice = (req, res, next) => {
                             getSubTotal(result)
                         );
                         const position = invoiceTableTop + (i + 1) * 30;
-                        generateHr(doc, position + 20);
-                        generateHr(doc, position + 22);
+                        generateHrBottom(doc, position + 20);
+                        generateHrBottom(doc, position + 22);
                     })
                 }
             } else {

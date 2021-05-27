@@ -9,45 +9,6 @@ const Finishgoodsmasters = require('../../models/master/FinishGoodsMaster');
 //Add new purchase order
 exports.add_new_invoice = (req, res, next) => {
 
-    // const productIdList = [];
-
-    // console.log("req.body.products.length ****", req.body.products.length)
-    // for (let i = 0; i < req.body.products.length; i++) {
-    //     console.log("req.body.products[i]).id***", req.body.products[i].id);
-    //     productIdList.push(mongoose.Types.ObjectId(req.body.products[i].id));
-
-    // }
-    // console.log("productIdList1 ****** ", productIdList);
-
-    // Finishgoodsmasters.find({
-    //     'id': {
-    //         $in: productIdList
-    //         // [
-    //         //     mongoose.Types.ObjectId('4ed3ede8844f0f351100000c'),
-    //         //     mongoose.Types.ObjectId('4ed3f117a844e0471100000d'),
-    //         //     mongoose.Types.ObjectId('4ed3f18132f50c491100000e')
-    //         // ]
-    //     }
-    // }, function (err, docs) {
-    //     this.productIdList = docs;
-    //     console.log("productListResponse ******* ", docs);
-    // });
-
-    // const invoices = new Invoices({
-    //     id: mongoose.Types.ObjectId(),
-    //     customerId: req.body.customerId,
-    //     quotationNumber: req.body.quotationNumber,
-    //     remarks: req.body.remarks,
-    //     reference: req.body.reference,
-    //     userId: req.body.user.user.userId,
-    //     userName: req.body.user.user.userName,
-    //     userRole: req.body.user.user.userRole,
-    //     invoice_state: "enabled",
-    //     products: this.productsList,
-    //     invoiceNumber: getInvoiceNumber()
-    // });
-    // console.log("Updated Invoice ******* ", invoices);
-
     Count.findOneAndUpdate({ id: 'invoiceNo' }, { $inc: { seq: 1 } }, { "new": true }, (error, doc) => {
 
         if (doc) {
@@ -62,33 +23,63 @@ exports.add_new_invoice = (req, res, next) => {
                 return "IN" + year.toString() + month.toString() + doc.seq
             }
 
-            const invoices = new Invoices({
-                id: mongoose.Types.ObjectId(),
-                customerId: req.body.customerId,
-                quotationNumber: req.body.quotationNumber,
-                remarks: req.body.remarks,
-                reference: req.body.reference,
-                userId: req.body.user.user.userId,
-                userName: req.body.user.user.userName,
-                userRole: req.body.user.user.userRole,
-                invoice_state: "enabled",
-                products: req.body.products,
-                haveReturns: "false",
-                invoiceNumber: getInvoiceNumber()
-            });
+            const productIdList = [];
 
-            invoices.save()
-                .then(result => {
-                    //console.log(result);
-                })
-                .catch(err => console.log(err));
-            res.status(200).json({
-                //message: 'New Raw Material successfully created.',
-                invoices: invoices
+            console.log("req.body.products.length ****", req.body.products.length)
+            for (let i = 0; i < req.body.products.length; i++) {
+                productIdList.push(mongoose.Types.ObjectId(req.body.products[i].id));
+
+            }
+            console.log("productIdList1 ****** ", productIdList);
+
+
+            Finishgoodsmasters.find({
+                'id': {
+                    $in: productIdList
+                }
+            }, function (err, docs) {
+                this.productIdList = docs;
+                console.log("productListResponse1 ******* ", this.productIdList);
+
+                for (let i = 0; i < req.body.products.length; i++) {
+                    req.body.products[i].sellingPrice = this.productIdList[i].sellingPrice;
+                }
+
+                console.log("productListResponse2 ******* ", req.body.products);
+
+                
+                const invoices = new Invoices({
+                    id: mongoose.Types.ObjectId(),
+                    customerId: req.body.customerId,
+                    quotationNumber: req.body.quotationNumber,
+                    remarks: req.body.remarks,
+                    reference: req.body.reference,
+                    userId: req.body.user.user.userId,
+                    userName: req.body.user.user.userName,
+                    userRole: req.body.user.user.userRole,
+                    invoice_state: "enabled",
+                    products: req.body.products,
+                    haveReturns: "false",
+                    invoiceNumber: getInvoiceNumber()
+                });
+
+                console.log("invoices*****", invoices);
+
+                invoices.save()
+                    .then(invoicesRes => {
+                        res.status(200).json(invoicesRes);
+                    })
+                    .catch(err => {
+                        res.status(500).json({
+                            error: err
+                        })
+                    });
+
             });
         }
     })
 }
+
 //Get all invoices
 exports.all_invoices = (req, res, next) => {
     Invoices.aggregate(
@@ -584,7 +575,19 @@ exports.print_invoice = (req, res, next) => {
                 //generate table row
                 function generateTableRow(doc, y, productCode, productName, uom, quantity, rate, discount, discountAmount, total) {
                     doc
-                        .font("Helvetica")
+                        .font("Courier")
+                        .fontSize(9)
+                        .text(productCode, 50, y, { width: 50 })
+                        .text(productName, 90, y, { width: 180 })
+                        .text(quantity, 250, y, { width: 60, align: "right" })
+                        .text(rate, 300, y, { width: 60, align: "right" })
+                        .text(discount, 350, y, { width: 50, align: "right" })
+                        .text(discountAmount, 400, y, { width: 70, align: "right" })
+                        .text(total, 0, y, { align: "right" });
+                }
+                function generateTableBottom(doc, y, productCode, productName, uom, quantity, rate, discount, discountAmount, total) {
+                    doc
+                        .font("Helvetica-Bold")
                         .fontSize(9)
                         .text(productCode, 50, y, { width: 50 })
                         .text(productName, 90, y, { width: 180 })
@@ -620,12 +623,12 @@ exports.print_invoice = (req, res, next) => {
                             //console.log("discount", data.discount)
                             return data.discount
                         })
-                        const rates = data.productsList.map(data => {
+                        const rates = data.products.map(data => {
                             //console.log("rate", data.sellingPrice)
                             return data.sellingPrice
                         })
                         let totalValue = []
-                        for (let i = 0; i < Math.min(quantities.length, rates.length, discounts.length); i++) {
+                        for (let i = 0; i < Math.min(quantities.length); i++) {
                             let quantity = quantities[i]
                             let discount = discounts[i]
                             let rate = rates[i]
@@ -647,10 +650,10 @@ exports.print_invoice = (req, res, next) => {
                     const productTable = result.map(data => {
                         let i,
                             invoiceTableTop = 305;
-                        const products = data.productsList.map(data => {
+                        const productsInfo = data.productsList.map(data => {
                             return data
                         })
-                        const quantities = data.products.map(data => {
+                        const productsDetails = data.products.map(data => {
                             return data
                         })
 
@@ -666,16 +669,16 @@ exports.print_invoice = (req, res, next) => {
                             "Total"
                         );
                         generateHr(doc, invoiceTableTop + 20);
-                        for (i = 0; i < products.length; i++) {
-                            for (let index = 0; index < quantities.length; index++) {
-                                const product = products[i];
-                                const quantity = quantities[i]
+                        for (i = 0; i < productsInfo.length; i++) {
+                            for (let index = 0; index < productsDetails.length; index++) {
+                                const product = productsInfo[i];
+                                const quantity = productsDetails[i]
                                 const position = invoiceTableTop + (i + 1) * 30;
-                                let totalValue = product.sellingPrice * quantity.quantity
+                                let totalValue = quantity.sellingPrice * quantity.quantity
                                 let discount = (100 - quantity.discount) / 100
                                 let discountValue = totalValue * discount
                                 let discountAmount = totalValue - discountValue
-                                let rate = product.sellingPrice
+                                let rate = quantity.sellingPrice
                                 generateTableRow(
                                     doc,
                                     position,
@@ -693,7 +696,8 @@ exports.print_invoice = (req, res, next) => {
                             }
                         }
                         const subtotalPosition = invoiceTableTop + (i + 1) * 31;
-                        generateTableRow(
+                        
+                        generateTableBottom(
                             doc,
                             subtotalPosition,
                             "",
@@ -722,7 +726,6 @@ exports.print_invoice = (req, res, next) => {
 }
 // Print Dispatch Note 
 exports.print_dispatch_note = (req, res, next) => {
-    console.log("Dispatch ID", req.params.dispatchId)
     Invoices.aggregate(
         [
             {
@@ -845,7 +848,7 @@ exports.print_dispatch_note = (req, res, next) => {
                         .text("+94 0112 617 711", 200, 110, { align: "right" })
                         .moveDown();
                 }
-                
+
                 //generate customer information
                 function generateCustomerInformation(doc, result) {
                     const results = result.map(data => {
@@ -943,7 +946,7 @@ exports.print_dispatch_note = (req, res, next) => {
                 function formatNumber(num) {
                     return num.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,")
                 }
-                
+
 
                 //generate invoice table
                 function generateInvoiceTable(doc, result) {
@@ -953,15 +956,15 @@ exports.print_dispatch_note = (req, res, next) => {
                             invoiceTableTop = 295;
                         const products = data.productsList.map(data => {
                             return data
-                        })                        
+                        })
                         const allDispatchNotes = data.dispatchNotes
-                       
+
                         const filteredDispatchNote = allDispatchNotes.filter(note => note.dispatchId == req.params.dispatchId);
-                      
-                        const quantities = filteredDispatchNote.map(note=>{
+
+                        const quantities = filteredDispatchNote.map(note => {
                             return note.data
                         })
-                        
+
                         const qu2 = quantities[0].map(quan => {
                             return quan
                         })
@@ -978,7 +981,7 @@ exports.print_dispatch_note = (req, res, next) => {
                                 const product = products[i];
                                 const quantity = qu2[i]
                                 const position = invoiceTableTop + (i + 1) * 30;
-                                
+
                                 generateTableRow(
                                     doc,
                                     position,
@@ -992,7 +995,7 @@ exports.print_dispatch_note = (req, res, next) => {
                             }
                         }
                         const subtotalPosition = invoiceTableTop + (i + 1) * 23;
-                        
+
                         const position = invoiceTableTop + (i + 1) * 30;
                     })
                 }

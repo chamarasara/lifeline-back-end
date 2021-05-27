@@ -37,3 +37,10 @@ app.use('/api/hr/salaries', require('./routes/api/hr/salaries'))
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+
+//Handle unhandle promise rejection
+process.on('unhandledRejection', (err, promise) => {
+    console.log(`Error: ${err.message}`)
+    //Close server and exit process
+    server.close(()=>process.exit(1))
+})
