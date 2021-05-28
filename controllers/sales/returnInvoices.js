@@ -508,7 +508,7 @@ exports.print_return_invoice = (req, res, next) => {
                 //generate table row
                 function generateTableRow(doc, y, productCode, productName, uom, quantity, rate, discount, total) {
                     doc
-                        .font("Courier")
+                        .font("Courier-Bold")
                         .fontSize(9)
                         .text(productCode, 50, y, { width: 50 })
                         .text(productName, 90, y, { width: 180 })
