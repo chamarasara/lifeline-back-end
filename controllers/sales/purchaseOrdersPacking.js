@@ -1,5 +1,6 @@
 const PurchaseOrdersPacking = require('../../models/purchaseOrders/purchaseOrdersPacking');
 const mongoose = require('mongoose');
+
 const _ = require('lodash');
 const PDFDocument = require("pdfkit");
 const moment = require('moment');
@@ -16,7 +17,7 @@ exports.purchase_order_packing_add_new = (req, res, next) => {
                 const month = date.getMonth() + 1
                 console.log(year.toString() + month.toString() + (Math.random() * 100000).toFixed())
                 //return (moment(Date.now()).format('YYYY/MM') + ((Math.random() * 100000).toFixed()))
-                return year.toString() + month.toString() + doc.seq
+                return "POP" +year.toString() + month.toString() + doc.seq
             }
             const purchaseOrdersPacking = new PurchaseOrdersPacking({
                 id: mongoose.Types.ObjectId(),
@@ -267,7 +268,7 @@ exports.print_purchase_orders_packing = (req, res, next) => {
                     generateHeader(doc)
                     //generateFooter(doc)
                     generateSupplierInformation(doc, result)
-                    //generateOrderTable(doc, result);
+                    generateOrderTable(doc, result);
                     // see the range of buffered pages
                     const range = doc.bufferedPageRange(); // => { start: 0, count: 2 }
                     //set page numbering
@@ -281,7 +282,7 @@ exports.print_purchase_orders_packing = (req, res, next) => {
                     //set userName 
                     for (i = range.start, end = range.start + range.count, range.start <= end; i < end; i++) {
                         doc.switchToPage(i);
-                        doc.text(`This is system generate document. No sign required`, 50,
+                        doc.text(`This is system generated document. No sign required`, 50,
                             700,
                             { align: "center", width: 500 });
                     }
@@ -384,7 +385,7 @@ exports.print_purchase_orders_packing = (req, res, next) => {
                 function generateTableRow(doc, y, productCode, productName, uom, quantity) {
 
                     doc
-                        .font("Helvetica")
+                        .font("Courier-Bold")
                         .fontSize(9)
                         .text(productCode, 50, y)
                         .text(productName, 90, y)
@@ -393,48 +394,14 @@ exports.print_purchase_orders_packing = (req, res, next) => {
                 }
                 function generateTableRowTop(doc, y, productCode, productName, uom, quantity, rate, discount, total) {
                     doc
-                        .font("Helvetica-Bold")
-                        .fontSize(9)
-                        .text(productCode, 50, y, { width: 50 })
-                        .text(productName, 90, y, { width: 180 })
-                        .text(uom, 270, y, { width: 40, align: "right" })
-                        .text(quantity, 300, y, { width: 60, align: "right" })
-                        .text(rate, 350, y, { width: 50, align: "right" })
-                        .text(discount, 400, y, { width: 50, align: "right" })
-                        .font("Helvetica-Bold")
-                        .text(total, 0, y, { align: "right" });
-                }
-                function generateTableBottom(doc, y, productCode, productName, uom, quantity, rate, discount, discountAmount, total) {
                     doc
                         .font("Helvetica-Bold")
                         .fontSize(9)
-                        .text(productCode, 50, y, { width: 50 })
-                        .text(productName, 90, y, { width: 180 })
-                        .text(quantity, 250, y, { width: 60, align: "right" })
-                        .text(rate, 300, y, { width: 60, align: "right" })
-                        .text(discount, 350, y, { width: 50, align: "right" })
-                        .text(discountAmount, 400, y, { width: 70, align: "right" })
-                        .text(total, 0, y, { align: "right" });
-                }
-                // function getSubTotal(result) {
-
-                //     const getTotal = result.map(data => {
-                //         const quantities = data.products.map(data => {
-                //             return data.quantity * data.rate
-                //         })
-                //         const total = quantities.reduce((a, b) => (a + b))
-                //         return total
-                //     })
-                //     return getTotal
-                // }
-                // function getCurrency(result) {
-
-                //     const getCurrency = result.map(data => {
-                //         const currency = data.products[0]
-                //         return currency.currency
-                //     })
-                //     return getCurrency
-                // }
+                        .text(productCode, 50, y)
+                        .text(productName, 90, y)
+                        .text(uom, 380, y, { width: 50, align: "right" })
+                        .text(quantity, 470, y, { width: 50, align: "right" })
+                }             
 
                 //generate invoice table
                 function generateOrderTable(doc, result) {
@@ -446,7 +413,7 @@ exports.print_purchase_orders_packing = (req, res, next) => {
                         const products = data.packingMaterialsList.map(data => {
                             return data
                         })
-
+                        
                         const quantities = data.packingMaterials.map(data => {
                             return data
                         })
@@ -476,20 +443,7 @@ exports.print_purchase_orders_packing = (req, res, next) => {
                                 );
                                 generateHr(doc, position + 20);
                             }
-                        }
-                        const subtotalPosition = orderTableTop + (i + 1) * 30;
-                        generateTableBottom(
-                            doc,
-                            subtotalPosition,
-                            "",
-                            "",
-                            "",
-
-                            //getSubTotal(result)
-                        );
-                        const position = invoiceTableTop + (i + 1) * 30;
-                        generateHrBottom(doc, position + 20);
-                        generateHrBottom(doc, position + 22);
+                        }                      
                     })
                 }
             } else {

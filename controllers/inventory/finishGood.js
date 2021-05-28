@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const moment = require('moment');
 const fs = require("fs");
 const PDFDocument = require("pdfkit");
-
+const Finishgoodsmasters = require('../../models/master/FinishGoodsMaster');
 //Add new purchase order
 exports.add_new_finishgood_inventory = (req, res, next) => {
 
@@ -21,27 +21,33 @@ exports.add_new_finishgood_inventory = (req, res, next) => {
                 //return (moment(Date.now()).format('YYYY/MM') + ((Math.random() * 100000).toFixed()))
                 return + year.toString() + month.toString() + doc.seq
             }
+            Finishgoodsmasters.find({ 'id': req.body.productId },
+                function (err, docs) {
 
-            const finishGoodInventory = new FinishGoodInventory({
-                id: mongoose.Types.ObjectId(),
-                productId: req.body.productId,
-                batchNumber: req.body.batchNumber,
-                quantity: req.body.quantity,
-                finishGoodDescription: req.body.finishGoodDescription,
-                userId: req.body.user.user.userId,
-                userName: req.body.user.user.userName,
-                userRole: req.body.user.user.userRole,
-                refNumberFgInventory: getRefNumber()
-            });
-            finishGoodInventory.save()
-                .then(result => {
-                    //console.log(result);
-                })
-                .catch(err => console.log(err));
-            res.status(200).json({
-                //message: 'New Raw Material successfully created.',
-                finishGoodInventory: finishGoodInventory
-            });
+                    const productData = docs[0]
+                    console.log("Product data",productData)
+                    const finishGoodInventory = new FinishGoodInventory({
+                        id: mongoose.Types.ObjectId(),
+                        productId: req.body.productId,
+                        batchNumber: req.body.batchNumber,
+                        quantity: req.body.quantity,
+                        finishGoodDescription: req.body.finishGoodDescription,
+                        userId: req.body.user.user.userId,
+                        userName: req.body.user.user.userName,
+                        userRole: req.body.user.user.userRole,
+                        refNumberFgInventory: getRefNumber()
+                    });
+                    finishGoodInventory.save()
+                        .then(result => {
+                            //console.log(result);
+                        })
+                        .catch(err => console.log(err));
+                    res.status(200).json({
+                        //message: 'New Raw Material successfully created.',
+                        finishGoodInventory: finishGoodInventory
+                    });
+                }
+            )
         }
     })
 }

@@ -6,7 +6,7 @@ const PurchaseOrdersRawSchema = new mongoose.Schema({
     supplierId: { type: String, require: true },    
     order_state: { type: String },
     disable_reason: { type: String },
-    orderNumber: { type: Number },
+    orderNumber: { type: String },
     rawMaterials: { type: Array },
     userId: { type: String },
     userName: { type: String },
