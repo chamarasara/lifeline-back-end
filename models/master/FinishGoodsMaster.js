@@ -17,7 +17,7 @@ const FinishGoodMasterSchema = new mongoose.Schema({
     barCodeImage: { type: String },
     artWorkNumber: { type: String },
     productDescription: { type: String },
-    sellingPrice: { type: String },    
+    sellingPrice: { type: Number },
     factoryPrice: { type: Number },
     distributorMargin: { type: Number },
     retailerMargin: { type: Number },

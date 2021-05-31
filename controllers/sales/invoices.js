@@ -23,29 +23,37 @@ exports.add_new_invoice = (req, res, next) => {
                 return "IN" + year.toString() + month.toString() + doc.seq
             }
 
-            const productIdList = [];
+            const productList = [];
 
             console.log("req.body.products.length ****", req.body.products.length)
             for (let i = 0; i < req.body.products.length; i++) {
-                productIdList.push(mongoose.Types.ObjectId(req.body.products[i].id));
+                productList.push(mongoose.Types.ObjectId(req.body.products[i].id));
 
             }
-            console.log("productIdList1 ****** ", productIdList);
-
 
             Finishgoodsmasters.find({
                 'id': {
-                    $in: productIdList
+                    $in: productList
                 }
             }, function (err, docs) {
-                this.productIdList = docs;
-                console.log("productListResponse1 ******* ", this.productIdList);
+                this.productList = docs;
 
-                for (let i = 0; i < req.body.products.length; i++) {
-                    req.body.products[i].sellingPrice = this.productIdList[i].sellingPrice;
+                var reorderedResults = naturalOrderResults(docs, productList);
+
+                //Re order results by matching products id
+                function naturalOrderResults(resultsFromMongoDB, queryIds) {
+                    //Let's build the hashmap
+                    var hashOfResults = resultsFromMongoDB.reduce(function (prev, curr) {
+                        prev[curr.id] = curr;
+                        return prev;
+                    }, {});
+
+                    return queryIds.map(function (id) { return hashOfResults[id] });
                 }
 
-                console.log("productListResponse2 ******* ", req.body.products);
+                for (let i = 0; i < req.body.products.length; i++) {
+                    req.body.products[i].sellingPrice = reorderedResults[i].sellingPrice;
+                }
 
                 
                 const invoices = new Invoices({
@@ -63,7 +71,7 @@ exports.add_new_invoice = (req, res, next) => {
                     invoiceNumber: getInvoiceNumber()
                 });
 
-                console.log("invoices*****", invoices);
+                //console.log("invoices*****", invoices);
 
                 invoices.save()
                     .then(invoicesRes => {

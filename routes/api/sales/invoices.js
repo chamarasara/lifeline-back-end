@@ -3,9 +3,13 @@ const router = express.Router();
 const { check, validationResult } = require('express-validator')
 //const auth = require('../../middleware/auth')
 
+//Controllers
 const InvoicesController = require('../../../controllers/sales/invoices')
+//Middlewares
+const InventoryMiddleware = require('../../../middleware/inventory/fifo')
+
 //New purchase order
-router.post('/new-invoice', InvoicesController.add_new_invoice);
+router.post('/new-invoice',  InvoicesController.add_new_invoice);
 //All Invoices
 router.get('/all-invoices', InvoicesController.all_invoices);
 //Get single Invoice
