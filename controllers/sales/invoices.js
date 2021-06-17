@@ -1,4 +1,5 @@
 const Invoices = require('../../models/invoices/invoices');
+const FinishGoodInventory = require("../../models/inventory/FinishGoodInventory");
 const Count = require('../../models/counter/count');
 const mongoose = require('mongoose');
 const moment = require('moment');
@@ -55,13 +56,14 @@ exports.add_new_invoice = (req, res, next) => {
                     req.body.products[i].sellingPrice = reorderedResults[i].sellingPrice;
                 }
 
-                
+
                 const invoices = new Invoices({
                     id: mongoose.Types.ObjectId(),
                     customerId: req.body.customerId,
                     quotationNumber: req.body.quotationNumber,
                     remarks: req.body.remarks,
                     reference: req.body.reference,
+                    transportCost: req.body.transportCost,
                     userId: req.body.user.user.userId,
                     userName: req.body.user.user.userName,
                     userRole: req.body.user.user.userRole,
@@ -239,6 +241,7 @@ exports.update_invoice = (req, res, next) => {
 }
 //push dispatch notes to invoice
 exports.dispatch_note = (req, res, next) => {
+    req.setTimeout(2147483647);
     const id = req.params.id;
     console.log("Dispatch Note", req.body.remarks)
     const dispatchId = mongoose.Types.ObjectId()
@@ -275,6 +278,97 @@ exports.dispatch_note = (req, res, next) => {
                 error: err
             });
         });
+
+    //update inventory
+    const productIdList = []
+    const productQuantityList = []
+
+    for (let i = 0; i < req.body.products.length; i++) {
+        productIdList.push(mongoose.Types.ObjectId(req.body.products[i].id));
+        console.log("id ", req.body.products[i].id)
+    }
+
+    for (let i = 0; i < req.body.products.length; i++) {
+        productQuantityList.push(parseInt(req.body.products[i].quantity));
+        console.log("quantity ", req.body.products[i].quantity)
+    }
+
+    for (let i = 0; i < req.body.products.length; i++) {
+        console.log("req.body.products.length ", req.body.products.length)
+
+        FinishGoodInventory.find(
+            {
+                'productId': req.body.products[i].id,
+                'remainingQuantity': { $gt: 0 },
+                'finishGoodState': "Active"
+            },
+            (function (err, docs) {
+
+                for (let x = 0; x < docs.length; x++) {
+                    // console.log("productQuantityList[j]", productQuantityList[j])
+                    // console.log("docs[x].remainingQuantity", docs[x].remainingQuantity)
+
+                    if (req.body.products[i].id == docs[x].productId && req.body.products[i].quantity == docs[x].remainingQuantity) {
+                        console.log(req.body.products[i].quantity, "=====", docs[x].remainingQuantity)
+                        let setValue = 0
+                        FinishGoodInventory.findOneAndUpdate(
+                            { 'id': docs[x].id },
+                            {
+                                $set: { "remainingQuantity": setValue },
+                                $push: { "issuedItems": { "Date": Date(), "invoiceId": req.body.id, "invoiceNumber": req.body.invoiceNumber, quantity: req.body.products[i].quantity } }
+                            },
+                        )
+                            .exec()
+                            .catch(err => {
+                                res.status(500).json({
+                                    error: err
+                                })
+                            });
+                        console.log("Set value", setValue)
+                        { break }
+                    }
+                    if (req.body.products[i].id == docs[x].productId && req.body.products[i].quantity < docs[x].remainingQuantity) {
+                        console.log(req.body.products[i].quantity, "<<<<<", docs[x].remainingQuantity)
+                        let setValue = docs[x].remainingQuantity - req.body.products[i].quantity
+                        FinishGoodInventory.findOneAndUpdate(
+                            { 'id': docs[x].id },
+                            {
+                                $set: { "remainingQuantity": setValue },
+                                $push: { "issuedItems": { "Date": Date(), "invoiceId": req.body.id, "invoiceNumber": req.body.invoiceNumber, quantity: req.body.products[i].quantity } }
+                            }
+                        ).exec()
+                            .catch(err => {
+                                res.status(500).json({
+                                    error: err
+                                })
+                            });
+                        { break }
+                    }
+                    if (req.body.products[i].id == docs[x].productId && req.body.products[i].quantity > docs[x].remainingQuantity) {
+                        console.log(req.body.products[i].quantity, ">>>>>", docs[x].remainingQuantity)
+                        req.body.products[i].quantity = req.body.products[i].quantity - docs[x].remainingQuantity
+                        let setValue = 0
+                        FinishGoodInventory.findOneAndUpdate(
+                            { 'id': docs[x].id },
+                            {
+                                $set: { "remainingQuantity": setValue },
+                                $push: {
+                                    "issuedItems": { "Date": Date(), "invoiceId": req.body.id, "invoiceNumber": req.body.invoiceNumber, quantity: docs[x].remainingQuantity }
+                                }
+                            }
+                        )
+                            .exec()
+                            .catch(err => {
+                                res.status(500).json({
+                                    error: err
+                                })
+                            });
+                    }
+
+                }
+            })
+        )
+    }
 }
 //Delete invoice
 exports.delete_invoice = (req, res, next) => {
@@ -651,7 +745,49 @@ exports.print_invoice = (req, res, next) => {
                     })
                     return getTotal
                 }
+               function getTransportCost(result){
+                   let data= result.map(data=>{
+                        if (!data.transportCost) {
+                            return 0
+                        } else  {
+                            return data.transportCost
+                        }
+                    })
+                   return data[0] 
+                }
 
+                function getSubTotalWithTransport(result) {
+                    const getTotal = result.map(data => {
+                        const quantities = data.products.map(data => {
+                            //console.log("quantity", data.quantity)
+                            return data.quantity
+                        })
+                        const discounts = data.products.map(data => {
+                            //console.log("discount", data.discount)
+                            return data.discount
+                        })
+                        const rates = data.products.map(data => {
+                            //console.log("rate", data.sellingPrice)
+                            return data.sellingPrice
+                        })
+                        let totalValue = []
+                        for (let i = 0; i < Math.min(quantities.length); i++) {
+                            let quantity = quantities[i]
+                            let discount = discounts[i]
+                            let rate = rates[i]
+                            totalValue[i] = (quantity * rate) / 100 * (100 - discount);
+
+                            //console.log(totalValue, "Total Value")
+                        }
+                       
+                        const total = totalValue.reduce((a, b) => (a + b))
+                        const transport = getTransportCost(result)
+                        const subtotal = total + transport
+                        //console.log(totalValue.reduce((a, b) => a + b, 0), "total")
+                        return formatNumber(subtotal.toFixed(2))
+                    })
+                    return getTotal
+                }
                 //generate invoice table
                 function generateInvoiceTable(doc, result) {
 
@@ -664,7 +800,7 @@ exports.print_invoice = (req, res, next) => {
                         const productsDetails = data.products.map(data => {
                             return data
                         })
-
+                        console.log(productsDetails)
                         generateTableRowTop(
                             doc,
                             invoiceTableTop,
@@ -703,8 +839,8 @@ exports.print_invoice = (req, res, next) => {
 
                             }
                         }
-                        const subtotalPosition = invoiceTableTop + (i + 1) * 31;
-                        
+                        const subtotalPosition = invoiceTableTop + (i + 1) * 30;
+
                         generateTableBottom(
                             doc,
                             subtotalPosition,
@@ -717,9 +853,39 @@ exports.print_invoice = (req, res, next) => {
                             "Subtotal",
                             getSubTotal(result)
                         );
-                        const position = invoiceTableTop + (i + 1) * 30;
-                        generateHrBottom(doc, position + 20);
-                        generateHrBottom(doc, position + 22);
+
+
+
+                        const transportcostposition = subtotalPosition +  15;
+                        generateTableBottom(
+                            doc,
+                            transportcostposition,
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            "(+) Transport",
+                            formatNumber(getTransportCost(result).toFixed(2))
+                        );
+                        generateHrBottom(doc, transportcostposition + 10);
+                        const totalcostposition = transportcostposition + 15;
+                        generateTableBottom(
+                            doc,
+                            totalcostposition,
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            "Total",
+                            getSubTotalWithTransport(result)
+                        );
+                        const position = totalcostposition + 5;
+                        generateHrBottom(doc, position + 6);
+                        generateHrBottom(doc, position + 8);
                     })
                 }
             } else {

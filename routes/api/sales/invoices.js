@@ -9,7 +9,7 @@ const InvoicesController = require('../../../controllers/sales/invoices')
 const InventoryMiddleware = require('../../../middleware/inventory/fifo')
 
 //New purchase order
-router.post('/new-invoice',  InvoicesController.add_new_invoice);
+router.post('/new-invoice', InvoicesController.add_new_invoice);
 //All Invoices
 router.get('/all-invoices', InvoicesController.all_invoices);
 //Get single Invoice
@@ -17,7 +17,7 @@ router.get('/single-invoice/:id', InvoicesController.single_invoice);
 //Update Invoice
 router.patch('/update-invoice/:id', InvoicesController.update_invoice);
 //Create and update dispatch note
-router.patch('/update-dispatch-note/:id', InvoicesController.dispatch_note);
+router.patch('/update-dispatch-note/:id', InvoicesController.dispatch_note, InventoryMiddleware.fifo );
 //Delete Invoice
 router.delete('/delete-invoice/:id', InvoicesController.delete_invoice);
 //Search

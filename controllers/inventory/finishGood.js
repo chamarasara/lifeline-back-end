@@ -25,12 +25,16 @@ exports.add_new_finishgood_inventory = (req, res, next) => {
                 function (err, docs) {
 
                     const productData = docs[0]
-                    console.log("Product data",productData)
+                    console.log("Product data", productData)
                     const finishGoodInventory = new FinishGoodInventory({
                         id: mongoose.Types.ObjectId(),
                         productId: req.body.productId,
                         batchNumber: req.body.batchNumber,
+                        sellingPrice: productData.sellingPrice,
+                        manufacturingDate: req.body.manufacturingDate,
+                        reasonForDelay: req.body.reasonForDelay,
                         quantity: req.body.quantity,
+                        remainingQuantity: req.body.quantity,
                         finishGoodDescription: req.body.finishGoodDescription,
                         userId: req.body.user.user.userId,
                         userName: req.body.user.user.userName,
