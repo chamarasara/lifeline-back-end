@@ -35,15 +35,27 @@ exports.add_new_quotation = (req, res, next) => {
 
 
             Finishgoodsmasters.find({
-                'id': {
+                'id': {     
                     $in: productIdList
                 }
             }, function (err, docs) {
                 this.productIdList = docs;
-                console.log("productListResponse1 ******* ", this.productIdList);
+
+                var reorderedResults = naturalOrderResults(docs, productIdList);
+
+                //Re order results by matching products id
+                function naturalOrderResults(resultsFromMongoDB, queryIds) {
+                    //Let's build the hashmap
+                    var hashOfResults = resultsFromMongoDB.reduce(function (prev, curr) {
+                        prev[curr.id] = curr;
+                        return prev;
+                    }, {});
+
+                    return queryIds.map(function (id) { return hashOfResults[id] });
+                }
 
                 for (let i = 0; i < req.body.products.length; i++) {
-                    req.body.products[i].sellingPrice = this.productIdList[i].sellingPrice;
+                    req.body.products[i].sellingPrice = reorderedResults[i].sellingPrice;
                 }
 
                 console.log("productListResponse2 ******* ", req.body.products);
@@ -60,13 +72,17 @@ exports.add_new_quotation = (req, res, next) => {
                 });
                 quotations.save()
                     .then(result => {
-                        res.status(200).json(result);
+                        console.log("New Quotation ", result)
                     })
                     .catch(err => {
                         res.status(500).json({
                             error: err
                         })
                     });
+                res.status(200).json({
+                    message: 'Successfull!',
+                    quotations: quotations
+                });
             });
         }
     })

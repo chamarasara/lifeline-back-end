@@ -7,6 +7,9 @@ const moment = require('moment');
 //const Supplier = require('../../models/master/SupplierMaster');
 //Add new purchase order
 exports.purchase_order_packing_add_new = (req, res, next) => {
+    console.log("pdf file", req.file)
+    const body = JSON.parse(req.body.data)
+    const user = JSON.parse(req.body.user)
     Count.findOneAndUpdate({ id: 'purchaseOrderPmNo' }, { $inc: { seq: 1 } }, { "new": true }, (error, doc) => {
         if (doc) {
             //generate order number
@@ -15,19 +18,19 @@ exports.purchase_order_packing_add_new = (req, res, next) => {
                     var date = new Date()
                 const year = date.getFullYear()
                 const month = date.getMonth() + 1
-                console.log(year.toString() + month.toString() + (Math.random() * 100000).toFixed())
                 //return (moment(Date.now()).format('YYYY/MM') + ((Math.random() * 100000).toFixed()))
                 return "POP" +year.toString() + month.toString() + doc.seq
             }
             const purchaseOrdersPacking = new PurchaseOrdersPacking({
                 id: mongoose.Types.ObjectId(),
-                supplierId: req.body.supplierId,
-                userId: req.body.userId,
-                userName: req.body.user.user.userName,
-                userRole: req.body.user.user.userRole,
+                supplierId: body.supplierId,
+                userId: user.userId,
+                userName: user.user.userName,
+                userRole: user.user.userRole,
                 order_state: "Pending",
                 orderNumber: getOrderNumber(),
-                packingMaterials: req.body.packingMaterials
+                packingMaterials: body.packingMaterials,
+                suplierInvoicePdf: req.file.path.replace(/\\/g, "/")
             });
             purchaseOrdersPacking.save()
                 .then(result => {
@@ -35,7 +38,7 @@ exports.purchase_order_packing_add_new = (req, res, next) => {
                 })
                 .catch(err => console.log(err));
             res.status(200).json({
-                //message: 'New Raw Material successfully created.',
+                message: 'Successfull!',
                 purchaseOrdersPacking: purchaseOrdersPacking
             });
         }
@@ -66,7 +69,6 @@ exports.purchase_orders_packing_get_all = (req, res, next) => {
     )
         .exec()
         .then(docs => {
-            console.log(docs);
             res.status(200).json(docs);
         })
         .catch(err => {
@@ -119,19 +121,24 @@ exports.purchase_orders_packing_get_one = (req, res, next) => {
 
 //Update purchase orders
 exports.update_purchase_order_packing = (req, res, next) => {
-
+    const body = JSON.parse(req.body.data)
     const id = req.params.id;
     const updateOps = {};
     for (const ops in req.body) {
         updateOps[ops.propName] = ops.value;
     }
 
-    PurchaseOrdersPacking.update({ _id: req.params.id }, { $set: req.body })
+    PurchaseOrdersPacking.updateOne({ _id: req.params.id }, { 
+        supplierId: body.supplierId,
+        packingMaterials: body.packingMaterials,
+        suplierInvoicePdf: req.file.path.replace(/\\/g, "/")
+     })
         .exec()
         .then(result => {
             PurchaseOrdersPacking.findById(id)
                 .then(docs => {
-                    res.status(200).json(docs);
+                    console.log(docs)
+                    res.status(200).json({docs});
                 })
                 .catch(err => {
                     console.log(err)
@@ -140,12 +147,45 @@ exports.update_purchase_order_packing = (req, res, next) => {
                     });
                 });
         })
+}
+//Delete purchase orders
+exports.delete_purchase_order_packing = (req, res, next) => {
+    const id = req.params.id;
+    PurchaseOrdersPacking.remove({ _id: id })
+        .exec()
+        .then(result => {
+            res.status(200).json(result);
+        })
         .catch(err => {
-            console.log(err)
             res.status(500).json({
                 error: err
-            });
+            })
         });
+}
+//Update purchase order state 
+exports.update_purchase_order_state_packing = (req, res, next) => {
+
+    const id = req.params.id;
+    const updateOps = {};
+    for (const ops in req.body) {
+        updateOps[ops.propName] = ops.value;
+    }
+
+    PurchaseOrdersPacking.updateOne({ _id: req.params.id }, { $set: req.body })
+        .exec()
+        .then(result => {
+            PurchaseOrdersPacking.findById(id)
+                .then(docs => {
+                    console.log(docs)
+                    res.status(200).json({ docs });
+                })
+                .catch(err => {
+                    console.log(err)
+                    res.status(500).json({
+                        error: err
+                    });
+                });
+        })
 }
 //Delete purchase orders
 exports.delete_purchase_order_packing = (req, res, next) => {
@@ -165,7 +205,6 @@ exports.delete_purchase_order_packing = (req, res, next) => {
 exports.search_purchase_orders_packing = (req, res, next) => {
     const startDate = moment(req.body.formValues.startDate).format('YYYY/MM/DD')
     const endDate = moment(req.body.formValues.endDate).format('YYYY/MM/DD')
-    //console.log("dates", startDate, " ", endDate)
     PurchaseOrdersPacking.aggregate(
         [
             {
@@ -241,7 +280,6 @@ exports.print_purchase_orders_packing = (req, res, next) => {
         .then(result => {
             const data = result
             if (result) {
-                console.log("doccccc", result)
 
                 createPurchaseOrder(result, "./purchaseorder.pdf")
                 //generate empty pdf
@@ -291,6 +329,10 @@ exports.print_purchase_orders_packing = (req, res, next) => {
                     //doc.pipe(res)
                     doc.end();
 
+                    
+                }
+                function formatNumber(num) {
+                    return num.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,")
                 }
                 //generate pdf header
                 function generateHeader(doc) {
@@ -381,28 +423,58 @@ exports.print_purchase_orders_packing = (req, res, next) => {
                         .lineTo(550, y)
                         .stroke();
                 }
+               function generateTableRowBottom(doc, y, total1, total) {
+
+                    doc
+                        .font("Courier-Bold")
+                        .fontSize(9)
+                        .text(total1, 430, y, { width: 50, align: "right" })
+                        .text(total, 480, y, { width: 70, align: "right" })
+                }
                 //generate table row
-                function generateTableRow(doc, y, productCode, productName, uom, quantity) {
+                function generateTableRow(doc, y, productCode, productName, uom, quantity, unitPrice, total) {
 
                     doc
                         .font("Courier-Bold")
                         .fontSize(9)
                         .text(productCode, 50, y)
                         .text(productName, 90, y)
-                        .text(uom, 380, y, { width: 50, align: "right" })
-                        .text(quantity, 470, y, { width: 50, align: "right" })
+                        .text(uom, 280, y, { width: 50, align: "right" })
+                        .text(quantity, 340, y, { width: 50, align: "right" })
+                        .text(unitPrice, 420, y, { width: 60, align: "right" })
+                        .text(total, 480, y, { width: 70, align: "right" })
+                        
                 }
-                function generateTableRowTop(doc, y, productCode, productName, uom, quantity, rate, discount, total) {
+                function generateTableRowTop(doc, y, productCode, productName, uom, quantity, unitPrice, total) {
                     doc
                     doc
                         .font("Helvetica-Bold")
                         .fontSize(9)
                         .text(productCode, 50, y)
                         .text(productName, 90, y)
-                        .text(uom, 380, y, { width: 50, align: "right" })
-                        .text(quantity, 470, y, { width: 50, align: "right" })
+                        .text(uom, 280, y, { width: 50, align: "right" })
+                        .text(quantity, 340, y, { width: 50, align: "right" })
+                        .text(unitPrice, 420, y, { width: 60, align: "right" })
+                        .text(total, 480, y, { width: 70, align: "right" })
                 }             
+                function getSubtotal(result) {
+                    const sum = []
+                    const subtotal = result.map(data => {
 
+                        const item = data.packingMaterials.map(data => {
+                            let totalValue = parseInt(data.unitPrice) * parseInt(data.quantity)
+                            let total = totalValue
+                            return formatNumber(total.toFixed(2))
+                        })
+                        for (let i = 0; i < Math.min(item.length); i++) {
+                            let total = parseInt(item[i])
+                            sum[i] = total
+                        }
+                        const totalSum = sum.reduce((a, b) => a + b, 0)
+                        return formatNumber(totalSum.toFixed(2))
+                    })
+                    return subtotal
+                }
                 //generate invoice table
                 function generateOrderTable(doc, result) {
 
@@ -424,7 +496,9 @@ exports.print_purchase_orders_packing = (req, res, next) => {
                             "Code",
                             "Material Name",
                             "UOM",
-                            "Quantity"
+                            "Quantity",
+                            "Unit Price",
+                            "Total"
                         );
                         generateHr(doc, orderTableTop + 20);
                         doc.font("Helvetica")
@@ -433,17 +507,30 @@ exports.print_purchase_orders_packing = (req, res, next) => {
                                 const product = products[i];
                                 const quantity = quantities[i]
                                 const position = orderTableTop + (i + 1) * 30;
+                                const subtotal = parseInt(quantity.quantity) * parseInt(quantity.unitPrice)
                                 generateTableRow(
                                     doc,
                                     position,
                                     `PM${product.materialCodePm}`,
                                     product.materialName,
                                     quantity.uom,
-                                    quantity.quantity
+                                    quantity.quantity,
+                                    formatNumber(parseInt(quantity.unitPrice).toFixed(2)),
+                                    formatNumber(parseInt(subtotal).toFixed(2))
                                 );
                                 generateHr(doc, position + 20);
                             }
-                        }                      
+                        }  
+                        const subtotalPosition = orderTableTop + (i + 1) * 30;
+                        generateTableRowBottom(
+                            doc,
+                            subtotalPosition,
+                            "Subtotal",
+                            getSubtotal(result)
+
+                        );
+                        generateHrBottom(doc, subtotalPosition + 15);
+                        generateHrBottom(doc, subtotalPosition + 17);
                     })
                 }
             } else {

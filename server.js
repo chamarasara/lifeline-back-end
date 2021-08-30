@@ -12,7 +12,11 @@ connectDB();
 app.use(express.json({ extended: false }));
 app.use(cors())
 
-//define routes
+//Static files
+app.use('/uploads/purchaseordersraw', express.static('uploads/purchaseordersraw')) // Purchase order Raw PDF files
+app.use('/uploads/purchaseorderspacking', express.static('uploads/purchaseorderspacking')) // Purchase order Packing PDF files
+
+// routes
 app.use('/api/users', require('./routes/api/users'))
 app.use('/api/user-roles', require('./routes/api/userRoles'))
 app.use('/api/auth', require('./routes/api/auth'))
@@ -33,6 +37,8 @@ app.use('/api/sales/quotations', require('./routes/api/sales/quotations'))
 app.use('/api/master-data/bom', require('./routes/api/masterdata/bomMaster'))
 app.use('/api/inventory/finish-good', require('./routes/api/inventory/finishGood'))
 app.use('/api/hr/salaries', require('./routes/api/hr/salaries'))
+app.use('/api/inventory/raw-material', require('./routes/api/inventory/rawMaterial'))
+app.use('/api/inventory/packing-material', require('./routes/api/inventory/packingMaterial'))
 
 
 const PORT = process.env.PORT || 5000;

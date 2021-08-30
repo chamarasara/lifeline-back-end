@@ -8,6 +8,8 @@ const PurchaseOrdersPackingSchema = new mongoose.Schema({
     disable_reason: { type: String },
     orderNumber: { type: String },
     packingMaterials: { type: Array },
+    grnDetails: [{}],
+    suplierInvoicePdf: { type: String, require: true },
     userId: { type: String },
     userName: { type: String },
     userRole: { type: String },

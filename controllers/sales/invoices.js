@@ -253,7 +253,7 @@ exports.dispatch_note = (req, res, next) => {
     //console.log(req.body)
 
     const data = req.body.products
-    Invoices.update({ _id: req.params.id }, {
+    Invoices.updateOne({ _id: req.params.id }, {
         $push: {
             dispatchNotes: { dispatchId, date, remarks, data }
         }

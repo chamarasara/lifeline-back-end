@@ -14,11 +14,12 @@ const InvoicesSchema = new mongoose.Schema({
     invoice_state: { type: String },
     disable_reason: { type: String },
     products: { type: Array },
+    dispatchNotes: [{}],
     invoiceNumber: { type: String },
     advancePayment: { type: Number },
     paymentsAll: { type: Array },
-    haveReturns: { type: Boolean, default: false },
-    dispatchNotes: [{}]
+    haveReturns: { type: Boolean, default: false }
+
 },
     {
         timestamps: true

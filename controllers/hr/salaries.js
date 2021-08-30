@@ -398,7 +398,7 @@ exports.print_salary = (req, res, next) => {
                 }
                 function generateTableRowBasicSalary(doc, y, c1, c2) {
                     doc
-                        .font("Courier")
+                        .font("Courier-Bold")
                         .fontSize(9)
                         .text(c1, 50, y, { width: 100 })
                         .text(c2, 150, y, { width: 100, align: "right" })
@@ -419,14 +419,14 @@ exports.print_salary = (req, res, next) => {
                 }
                 function generateTableRowSubItem(doc, y, c1, c2) {
                     doc
-                        .font("Courier")
+                        .font("Courier-Bold")
                         .fontSize(9)
                         .text(c1, 70, y, { width: 200 })
                         .text(c2, 150, y, { width: 100, align: "right" })
                 }
                 function generateTableRowSubItemRight(doc, y, c1, c2) {
                     doc
-                        .font("Courier")
+                        .font("Courier-Bold")
                         .fontSize(9)
                         .text(c1, 350, y, { width: 200 })
                         .text(c2, 450, y, { width: 100, align: "right" })

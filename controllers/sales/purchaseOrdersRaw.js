@@ -4,11 +4,17 @@ const mongoose = require('mongoose');
 const _ = require('lodash');
 const moment = require('moment');
 const PDFDocument = require("pdfkit");
-const multer = require('multer');
 
 //const Supplier = require('../../models/master/SupplierMaster');
 //Add new purchase order
 exports.purchase_order_raw_add_new = (req, res, next) => {
+
+    // console.log("pdf file", req.file)
+    // console.log("req body", req.body.user)
+    const body = JSON.parse(req.body.data)
+    const user = JSON.parse(req.body.user)
+    console.log(body)
+    console.log(user)
     Count.findOneAndUpdate({ id: 'purchaseOrderRmNo' }, { $inc: { seq: 1 } }, { "new": true }, (error, doc) => {
         if (doc) {
             //generate order number
@@ -17,27 +23,30 @@ exports.purchase_order_raw_add_new = (req, res, next) => {
                     var date = new Date()
                 const year = date.getFullYear()
                 const month = date.getMonth() + 1
-                console.log(year.toString() + month.toString() + (Math.random() * 100000).toFixed())
-                //return (moment(Date.now()).format('YYYY/MM') + ((Math.random() * 100000).toFixed()))
                 return "POR" + year.toString() + month.toString() + doc.seq
             }
             const purchaseOrdersRaw = new PurchaseOrdersRaw({
                 id: mongoose.Types.ObjectId(),
-                supplierId: req.body.supplierId,
-                userId: req.body.user.user.userId,
-                userName: req.body.user.user.userName,
-                userRole: req.body.user.user.userRole,
-                rawMaterials: req.body.rawMaterials,
+                supplierId: body.supplierId,
+                userId: user.userId,
+                userName: user.user.userName,
+                userRole: user.user.userRole,
+                rawMaterials: body.rawMaterials,
+                suplierInvoicePdf: req.file.path.replace(/\\/g, "/"),
                 order_state: "Pending",
                 orderNumber: getOrderNumber()
             });
             purchaseOrdersRaw.save()
                 .then(result => {
-                    console.log(result);
+                    console.log("New PO RM ", result)
                 })
-                .catch(err => console.log(err));
+                .catch(err => {
+                    res.status(500).json({
+                        error: err
+                    })
+                });
             res.status(200).json({
-                //message: 'New Raw Material successfully created.',
+                message: 'Successfull!',
                 purchaseOrdersRaw: purchaseOrdersRaw
             });
         }
@@ -68,7 +77,6 @@ exports.purchase_orders_raw_get_all = (req, res, next) => {
     )
         .exec()
         .then(docs => {
-            console.log(docs);
             res.status(200).json(docs);
         })
         .catch(err => {
@@ -122,6 +130,42 @@ exports.purchase_orders_raw_get_one = (req, res, next) => {
 
 //Update purchase orders
 exports.update_purchase_order_raw = (req, res, next) => {
+    const body = JSON.parse(req.body.data)
+    console.log(body)
+    const id = req.params.id;
+    const updateOps = {}
+    for (const ops in req.body) {
+        updateOps[ops.propName] = ops.value;
+    }
+
+    PurchaseOrdersRaw.updateOne({ _id: req.params.id }, { 
+        supplierId: body.supplierId,
+        rawMaterials: body.rawMaterials,
+        suplierInvoicePdf: req.file.path.replace(/\\/g, "/")
+     })
+        .exec()
+        .then(result => {
+            PurchaseOrdersRaw.findById(id)
+                .then(docs => {
+                    console.log("docs@@@@",docs)
+                    res.status(200).json(docs);
+                })
+                .catch(err => {
+                    console.log(err)
+                    res.status(500).json({
+                        error: err
+                    });
+                });
+        })
+        .catch(err => {
+            console.log(err)
+            res.status(500).json({
+                error: err
+            });
+        });
+}
+//Update purchase order state
+exports.update_purchase_order_state_raw = (req, res, next) => {
 
     const id = req.params.id;
     const updateOps = {};
@@ -129,7 +173,7 @@ exports.update_purchase_order_raw = (req, res, next) => {
         updateOps[ops.propName] = ops.value;
     }
 
-    PurchaseOrdersRaw.update({ _id: req.params.id }, { $set: req.body })
+    PurchaseOrdersRaw.updateOne({ _id: req.params.id }, { $set: req.body })
         .exec()
         .then(result => {
             PurchaseOrdersRaw.findById(id)
@@ -145,6 +189,40 @@ exports.update_purchase_order_raw = (req, res, next) => {
         })
         .catch(err => {
             console.log(err)
+            res.status(500).json({
+                error: err
+            });
+        });
+}
+//Push GRN details to PO
+exports.grn_details = (req, res, next) => {
+    //req.setTimeout(2147483647);
+    const id = req.params.id;
+    const dispatchId = mongoose.Types.ObjectId()
+    const remarks = req.body.remarks
+    const arr = []
+    const date = new Date()
+    arr.push(req.body.products)
+
+    const data = req.body.products
+    Invoices.updateOne({ _id: req.params.id }, {
+        $push: {
+            dispatchNotes: { dispatchId, date, remarks, data }
+        }
+    })
+        .exec()
+        .then(result => {
+            Invoices.findById(id)
+                .then(docs => {
+                    res.status(200).json(docs);
+                })
+                .catch(err => {
+                    res.status(500).json({
+                        error: err
+                    });
+                });
+        })
+        .catch(err => {
             res.status(500).json({
                 error: err
             });
@@ -168,7 +246,6 @@ exports.delete_purchase_order_raw = (req, res, next) => {
 exports.search_purchase_orders_raw = (req, res, next) => {
     const startDate = moment(req.body.formValues.startDate).format('MM/DD/YYYY')
     const endDate = moment(req.body.formValues.endDate).format('MM/DD/YYYY')
-    console.log("dates", startDate, " ", endDate)
     PurchaseOrdersRaw.aggregate(
         [
             {
@@ -242,7 +319,6 @@ exports.print_purchase_orders_raw = (req, res, next) => {
         .then(result => {
             const data = result
             if (result) {
-                console.log("doccccc", result)
 
                 createPurchaseOrder(result, "./purchaseorder.pdf")
                 //generate empty pdf
@@ -266,7 +342,6 @@ exports.print_purchase_orders_raw = (req, res, next) => {
 
 
                     });
-                    console.log("ddddd", result)
                     // doc.image('logo.jpg', { width: 150, height: 150 })
                     generateHeader(doc)
                     //generateFooter(doc)
@@ -282,7 +357,6 @@ exports.print_purchase_orders_raw = (req, res, next) => {
                             710,
                             { align: "center", width: 500 });
                     }
-                    console.log("dara")
                     //set userName 
                     for (i = range.start, end = range.start + range.count, range.start <= end; i < end; i++) {
                         doc.switchToPage(i);
@@ -293,9 +367,11 @@ exports.print_purchase_orders_raw = (req, res, next) => {
                     // manually flush pages that have been buffered
                     doc.flushPages();
                     //doc.pipe(res)
-                    //console.log(res)
                     doc.end();
 
+                }
+                function formatNumber(num) {
+                    return num.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,")
                 }
                 //generate pdf header
                 function generateHeader(doc) {
@@ -311,17 +387,7 @@ exports.print_purchase_orders_raw = (req, res, next) => {
                         .text("+94 0112 617 711", 200, 110, { align: "right" })
                         .moveDown();
                 }
-                //generate pdf footer
-                // function generateFooter(doc) {
-                //     doc
-                //         .fontSize(10)
-                //         .text(
-                //             "Payment is due within 15 days. Thank you for your business.",
-                //             50,
-                //             685,
-                //             { align: "center", width: 500 }
-                //         );
-                // }
+
                 //generate customer information
                 function generateSupplierInformation(doc, result) {
                     const results = result.map(data => {
@@ -390,27 +456,65 @@ exports.print_purchase_orders_raw = (req, res, next) => {
                         .stroke();
                 }
                 //generate table row
-                function generateTableRow(doc, y, materialCodeRm, productName, uom, quantity) {
+                function generateTableRow(doc, y, materialCodeRm, productName, uom, quantity, unitPrice, total) {
 
                     doc
                         .font("Courier-Bold")
                         .fontSize(9)
                         .text(materialCodeRm, 50, y)
                         .text(productName, 90, y)
-                        .text(uom, 380, y, { width: 50, align: "right" })
-                        .text(quantity, 470, y, { width: 50, align: "right" })
+                        .text(uom, 280, y, { width: 50, align: "right" })
+                        .text(quantity, 340, y, { width: 60, align: "right" })
+                        .text(unitPrice, 420, y, { width: 60, align: "right" })
+                        .text(total, 480, y, { width: 70, align: "right" })
                 }
-                function generateTableRowTop(doc, y, productCode, productName, uom, quantity, rate, discount, total) {
+                function generateTableRowBottom(doc, y, total1, total) {
+
+                    doc
+                        .font("Courier-Bold")
+                        .fontSize(9)
+                        .text(total1, 430, y, { width: 50, align: "right" })
+                        .text(total, 480, y, { width: 70, align: "right" })
+                }
+                function generateTableRowTop(doc, y, productCode, productName, uom, quantity, unitPrice, total) {
                     doc
                     doc
                         .font("Helvetica-Bold")
                         .fontSize(9)
                         .text(productCode, 50, y)
                         .text(productName, 90, y)
-                        .text(uom, 380, y, { width: 50, align: "right" })
-                        .text(quantity, 470, y, { width: 50, align: "right" })
+                        .text(uom, 280, y, { width: 50, align: "right" })
+                        .text(quantity, 340, y, { width: 60, align: "right" })
+                        .text(unitPrice, 420, y, { width: 60, align: "right" })
+                        .text(total, 480, y, { width: 70, align: "right" })
                 }
+                function generateHrBottom(doc, y) {
+                    doc
+                        .strokeColor("#aaaaaa")
+                        .lineWidth(1)
+                        .moveTo(490, y)
+                        .lineTo(550, y)
+                        .stroke();
+                }
+                function getSubtotal(result) {
+                    const sum = []
+                    const subtotal = result.map(data => {
 
+                        const item = data.rawMaterials.map(data => {
+                            let totalValue = parseInt(data.unitPrice) * parseInt(data.quantity)
+                            let total = totalValue
+                            return formatNumber(total.toFixed(2))
+                        })
+
+                        for (let i = 0; i < Math.min(item.length); i++) {
+                            let total = parseInt(item[i])
+                            sum[i] = total
+                        }
+                        const totalSum = sum.reduce((a, b) => a + b, 0)
+                        return formatNumber(totalSum.toFixed(2))
+                    })
+                    return subtotal
+                }
                 //generate invoice table
                 function generateOrderTable(doc, result) {
 
@@ -432,7 +536,9 @@ exports.print_purchase_orders_raw = (req, res, next) => {
                             "Code",
                             "Material Name",
                             "UOM",
-                            "Quantity"
+                            "Quantity",
+                            "Unit Price",
+                            "Total"
                         );
                         generateHr(doc, orderTableTop + 20);
                         doc.font("Helvetica")
@@ -441,18 +547,31 @@ exports.print_purchase_orders_raw = (req, res, next) => {
                                 const product = products[i];
                                 const quantity = quantities[i]
                                 const position = orderTableTop + (i + 1) * 30;
+                                const subtotal = parseInt(quantity.quantity) * parseInt(quantity.unitPrice)
                                 generateTableRow(
                                     doc,
                                     position,
                                     `RM${product.materialCodeRm}`,
                                     product.materialName,
                                     quantity.uom,
-                                    quantity.quantity
+                                    quantity.quantity,
+                                    formatNumber(parseInt(quantity.unitPrice).toFixed(2)),
+                                    formatNumber(parseInt(subtotal).toFixed(2))
                                 );
                                 generateHr(doc, position + 20);
                             }
                         }
 
+                        const subtotalPosition = orderTableTop + (i + 1) * 30;
+                        generateTableRowBottom(
+                            doc,
+                            subtotalPosition,
+                            "Subtotal",
+                            getSubtotal(result)
+
+                        );
+                        generateHrBottom(doc, subtotalPosition + 15);
+                        generateHrBottom(doc, subtotalPosition + 17);
                     })
                 }
             } else {
