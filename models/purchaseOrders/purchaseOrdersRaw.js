@@ -9,7 +9,6 @@ const PurchaseOrdersRawSchema = new mongoose.Schema({
     orderNumber: { type: String },
     rawMaterials: { type: Array },
     grnDetails: [{}],
-    suplierInvoicePdf: { type: String, require: true },
     userId: { type: String },
     userName: { type: String },
     userRole: { type: String }

@@ -7,9 +7,7 @@ const moment = require('moment');
 //const Supplier = require('../../models/master/SupplierMaster');
 //Add new purchase order
 exports.purchase_order_packing_add_new = (req, res, next) => {
-    console.log("pdf file", req.file)
-    const body = JSON.parse(req.body.data)
-    const user = JSON.parse(req.body.user)
+
     Count.findOneAndUpdate({ id: 'purchaseOrderPmNo' }, { $inc: { seq: 1 } }, { "new": true }, (error, doc) => {
         if (doc) {
             //generate order number
@@ -19,18 +17,17 @@ exports.purchase_order_packing_add_new = (req, res, next) => {
                 const year = date.getFullYear()
                 const month = date.getMonth() + 1
                 //return (moment(Date.now()).format('YYYY/MM') + ((Math.random() * 100000).toFixed()))
-                return "POP" +year.toString() + month.toString() + doc.seq
+                return "POP" + year.toString() + month.toString() + doc.seq
             }
             const purchaseOrdersPacking = new PurchaseOrdersPacking({
                 id: mongoose.Types.ObjectId(),
-                supplierId: body.supplierId,
-                userId: user.userId,
-                userName: user.user.userName,
-                userRole: user.user.userRole,
+                supplierId: req.body.supplierId,
+                userId: req.body.user.userId,
+                userName: req.body.user.user.userName,
+                userRole: req.body.user.user.userRole,
                 order_state: "Pending",
                 orderNumber: getOrderNumber(),
-                packingMaterials: body.packingMaterials,
-                suplierInvoicePdf: req.file.path.replace(/\\/g, "/")
+                packingMaterials: req.body.packingMaterials
             });
             purchaseOrdersPacking.save()
                 .then(result => {
@@ -121,24 +118,19 @@ exports.purchase_orders_packing_get_one = (req, res, next) => {
 
 //Update purchase orders
 exports.update_purchase_order_packing = (req, res, next) => {
-    const body = JSON.parse(req.body.data)
     const id = req.params.id;
     const updateOps = {};
     for (const ops in req.body) {
         updateOps[ops.propName] = ops.value;
     }
 
-    PurchaseOrdersPacking.updateOne({ _id: req.params.id }, { 
-        supplierId: body.supplierId,
-        packingMaterials: body.packingMaterials,
-        suplierInvoicePdf: req.file.path.replace(/\\/g, "/")
-     })
+    PurchaseOrdersPacking.updateOne({ _id: req.params.id }, { $set: req.body })
         .exec()
         .then(result => {
             PurchaseOrdersPacking.findById(id)
                 .then(docs => {
                     console.log(docs)
-                    res.status(200).json({docs});
+                    res.status(200).json({ docs });
                 })
                 .catch(err => {
                     console.log(err)
@@ -329,7 +321,7 @@ exports.print_purchase_orders_packing = (req, res, next) => {
                     //doc.pipe(res)
                     doc.end();
 
-                    
+
                 }
                 function formatNumber(num) {
                     return num.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,")
@@ -423,7 +415,7 @@ exports.print_purchase_orders_packing = (req, res, next) => {
                         .lineTo(550, y)
                         .stroke();
                 }
-               function generateTableRowBottom(doc, y, total1, total) {
+                function generateTableRowBottom(doc, y, total1, total) {
 
                     doc
                         .font("Courier-Bold")
@@ -443,7 +435,7 @@ exports.print_purchase_orders_packing = (req, res, next) => {
                         .text(quantity, 340, y, { width: 50, align: "right" })
                         .text(unitPrice, 420, y, { width: 60, align: "right" })
                         .text(total, 480, y, { width: 70, align: "right" })
-                        
+
                 }
                 function generateTableRowTop(doc, y, productCode, productName, uom, quantity, unitPrice, total) {
                     doc
@@ -456,7 +448,7 @@ exports.print_purchase_orders_packing = (req, res, next) => {
                         .text(quantity, 340, y, { width: 50, align: "right" })
                         .text(unitPrice, 420, y, { width: 60, align: "right" })
                         .text(total, 480, y, { width: 70, align: "right" })
-                }             
+                }
                 function getSubtotal(result) {
                     const sum = []
                     const subtotal = result.map(data => {
@@ -485,11 +477,11 @@ exports.print_purchase_orders_packing = (req, res, next) => {
                         const products = data.packingMaterialsList.map(data => {
                             return data
                         })
-                        
+
                         const quantities = data.packingMaterials.map(data => {
                             return data
                         })
-                        
+
                         generateTableRowTop(
                             doc,
                             orderTableTop,
@@ -520,7 +512,7 @@ exports.print_purchase_orders_packing = (req, res, next) => {
                                 );
                                 generateHr(doc, position + 20);
                             }
-                        }  
+                        }
                         const subtotalPosition = orderTableTop + (i + 1) * 30;
                         generateTableRowBottom(
                             doc,

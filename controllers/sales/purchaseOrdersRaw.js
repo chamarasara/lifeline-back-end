@@ -8,13 +8,7 @@ const PDFDocument = require("pdfkit");
 //const Supplier = require('../../models/master/SupplierMaster');
 //Add new purchase order
 exports.purchase_order_raw_add_new = (req, res, next) => {
-
-    // console.log("pdf file", req.file)
-    // console.log("req body", req.body.user)
-    const body = JSON.parse(req.body.data)
-    const user = JSON.parse(req.body.user)
-    console.log(body)
-    console.log(user)
+    console.log(req.body, "req boady")
     Count.findOneAndUpdate({ id: 'purchaseOrderRmNo' }, { $inc: { seq: 1 } }, { "new": true }, (error, doc) => {
         if (doc) {
             //generate order number
@@ -27,12 +21,11 @@ exports.purchase_order_raw_add_new = (req, res, next) => {
             }
             const purchaseOrdersRaw = new PurchaseOrdersRaw({
                 id: mongoose.Types.ObjectId(),
-                supplierId: body.supplierId,
-                userId: user.userId,
-                userName: user.user.userName,
-                userRole: user.user.userRole,
-                rawMaterials: body.rawMaterials,
-                suplierInvoicePdf: req.file.path.replace(/\\/g, "/"),
+                supplierId: req.body.supplierId,
+                userId: req.body.user.userId,
+                userName: req.body.user.user.userName,
+                userRole: req.body.user.user.userRole,
+                rawMaterials: req.body.rawMaterials,
                 order_state: "Pending",
                 orderNumber: getOrderNumber()
             });
@@ -130,24 +123,19 @@ exports.purchase_orders_raw_get_one = (req, res, next) => {
 
 //Update purchase orders
 exports.update_purchase_order_raw = (req, res, next) => {
-    const body = JSON.parse(req.body.data)
-    console.log(body)
+
     const id = req.params.id;
     const updateOps = {}
     for (const ops in req.body) {
         updateOps[ops.propName] = ops.value;
     }
 
-    PurchaseOrdersRaw.updateOne({ _id: req.params.id }, { 
-        supplierId: body.supplierId,
-        rawMaterials: body.rawMaterials,
-        suplierInvoicePdf: req.file.path.replace(/\\/g, "/")
-     })
+    PurchaseOrdersRaw.updateOne({ _id: req.params.id }, { $set: req.body })
         .exec()
         .then(result => {
             PurchaseOrdersRaw.findById(id)
                 .then(docs => {
-                    console.log("docs@@@@",docs)
+                    console.log("docs@@@@", docs)
                     res.status(200).json(docs);
                 })
                 .catch(err => {
