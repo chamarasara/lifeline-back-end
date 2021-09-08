@@ -23,6 +23,7 @@ const DistributorMasterSchema = new mongoose.Schema({
     creditAmount: { type: Number },
     distributorCode: { type: String },
     products: { type: Array },
+    areas: { type: Array },
     userId: { type: String },
     userName: { type: String },
     userRole: { type: String }

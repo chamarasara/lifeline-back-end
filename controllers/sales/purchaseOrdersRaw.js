@@ -135,7 +135,6 @@ exports.update_purchase_order_raw = (req, res, next) => {
         .then(result => {
             PurchaseOrdersRaw.findById(id)
                 .then(docs => {
-                    console.log("docs@@@@", docs)
                     res.status(200).json(docs);
                 })
                 .catch(err => {

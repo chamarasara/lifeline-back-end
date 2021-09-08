@@ -5,9 +5,9 @@ const moment = require('moment');
 
 //Add new distributor
 exports.add_new_distributor = (req, res, next) => {
-    
+
     Count.findOneAndUpdate({ id: 'distributorNo' }, { $inc: { seq: 1 } }, { "new": true }, (error, doc) => {
-        console.log(doc)
+        console.log("req", req)
         console.log("Distributor", doc)
         if (doc) {
             console.log(doc)
@@ -45,17 +45,18 @@ exports.add_new_distributor = (req, res, next) => {
                     postalCode: req.body.communicationAddress.postalCode,
                 },
                 products: req.body.products,
+                areas: req.body.areas,
                 userId: req.body.user.user.userId,
                 userName: req.body.user.user.userName,
                 userRole: req.body.user.user.userRole
             });
             distributorMaster.save()
                 .then(result => {
-                    console.log("Result",result)
+                    console.log("Result", result)
                 })
                 .catch(err => console.log(err));
             res.status(200).json({
-                //message: 'New Raw Material successfully created.',
+                message: 'New Raw Material successfully created.',
                 distributorMaster: distributorMaster
             });
         }
@@ -127,17 +128,16 @@ exports.get_one_distributor = (req, res, next) => {
 //Update distributor
 exports.update_distributor = (req, res, next) => {
     const id = req.params.id;
-    console.log("req body", req.body);
     const updateOps = {};
     for (const ops in req.body) {
         updateOps[ops.propName] = ops.value;
     }
-    DistributorMaster.update({ _id: id }, { $set: req.body })
+    DistributorMaster.updateOne({ _id: id }, { $set: req.body })
         .exec()
         .then(result => {
             DistributorMaster.findById(id)
                 .then(docs => {
-                    console.log("docs****", docs)
+                    console.log(docs)
                     res.status(200).json(docs);
                 })
                 .catch(err => {
@@ -147,12 +147,6 @@ exports.update_distributor = (req, res, next) => {
                     });
                 });
         })
-        .catch(err => {
-            console.log(err)
-            res.status(500).json({
-                error: err
-            });
-        });
 }
 //Delete distributor
 exports.delete_distributor = (req, res, next) => {
