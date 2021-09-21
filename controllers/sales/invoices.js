@@ -262,7 +262,6 @@ exports.dispatch_note = (req, res, next) => {
         .then(result => {
             Invoices.findById(id)
                 .then(docs => {
-                    console.log("Dis note", docs)
                     res.status(200).json(docs);
                 })
                 .catch(err => {

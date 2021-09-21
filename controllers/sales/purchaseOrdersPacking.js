@@ -429,11 +429,11 @@ exports.print_purchase_orders_packing = (req, res, next) => {
                     doc
                         .font("Courier-Bold")
                         .fontSize(9)
-                        .text(productCode, 50, y)
-                        .text(productName, 90, y)
-                        .text(uom, 280, y, { width: 50, align: "right" })
-                        .text(quantity, 340, y, { width: 50, align: "right" })
-                        .text(unitPrice, 420, y, { width: 60, align: "right" })
+                        .text(productCode, 50, y, { width: 50 })
+                        .text(productName, 90, y, { width: 250 })
+                        .text(uom, 320, y, { width: 50, align: "right" })
+                        .text(quantity, 380, y, { width: 60, align: "right" })
+                        .text(unitPrice, 430, y, { width: 60, align: "right" })
                         .text(total, 480, y, { width: 70, align: "right" })
 
                 }
@@ -442,11 +442,11 @@ exports.print_purchase_orders_packing = (req, res, next) => {
                     doc
                         .font("Helvetica-Bold")
                         .fontSize(9)
-                        .text(productCode, 50, y)
-                        .text(productName, 90, y)
-                        .text(uom, 280, y, { width: 50, align: "right" })
-                        .text(quantity, 340, y, { width: 50, align: "right" })
-                        .text(unitPrice, 420, y, { width: 60, align: "right" })
+                        .text(productCode, 50, y, { width: 50 })
+                        .text(productName, 90, y, { width: 250 })
+                        .text(uom, 320, y, { width: 50, align: "right" })
+                        .text(quantity, 380, y, { width: 60, align: "right" })
+                        .text(unitPrice, 430, y, { width: 60, align: "right" })
                         .text(total, 480, y, { width: 70, align: "right" })
                 }
                 function getSubtotal(result) {
@@ -456,7 +456,7 @@ exports.print_purchase_orders_packing = (req, res, next) => {
                         const item = data.packingMaterials.map(data => {
                             let totalValue = parseInt(data.unitPrice) * parseInt(data.quantity)
                             let total = totalValue
-                            return formatNumber(total.toFixed(2))
+                            return total
                         })
                         for (let i = 0; i < Math.min(item.length); i++) {
                             let total = parseInt(item[i])

@@ -184,23 +184,22 @@ exports.update_purchase_order_state_raw = (req, res, next) => {
 //Push GRN details to PO
 exports.grn_details = (req, res, next) => {
     //req.setTimeout(2147483647);
+    // console.log(" req.body.rawMaterials", req.body.rawMaterials)
     const id = req.params.id;
     const dispatchId = mongoose.Types.ObjectId()
-    const remarks = req.body.remarks
-    const arr = []
     const date = new Date()
-    arr.push(req.body.products)
-
-    const data = req.body.products
-    Invoices.updateOne({ _id: req.params.id }, {
+    const data = req.body.rawMaterials
+    const remarks = req.body.remarks
+    PurchaseOrdersRaw.updateOne({ _id: req.params.id }, {
         $push: {
-            dispatchNotes: { dispatchId, date, remarks, data }
+            grnDetails: { dispatchId, date, remarks, data }
         }
     })
         .exec()
         .then(result => {
-            Invoices.findById(id)
+            PurchaseOrdersRaw.findById(id)
                 .then(docs => {
+                    console.log("docs", docs)
                     res.status(200).json(docs);
                 })
                 .catch(err => {
@@ -448,11 +447,11 @@ exports.print_purchase_orders_raw = (req, res, next) => {
                     doc
                         .font("Courier-Bold")
                         .fontSize(9)
-                        .text(materialCodeRm, 50, y)
-                        .text(productName, 90, y)
-                        .text(uom, 280, y, { width: 50, align: "right" })
-                        .text(quantity, 340, y, { width: 60, align: "right" })
-                        .text(unitPrice, 420, y, { width: 60, align: "right" })
+                        .text(materialCodeRm, 50, y, { width: 50 })
+                        .text(productName, 90, y, { width: 250 })
+                        .text(uom, 320, y, { width: 50, align: "right" })
+                        .text(quantity, 380, y, { width: 60, align: "right" })
+                        .text(unitPrice, 430, y, { width: 60, align: "right" })
                         .text(total, 480, y, { width: 70, align: "right" })
                 }
                 function generateTableRowBottom(doc, y, total1, total) {
@@ -468,11 +467,11 @@ exports.print_purchase_orders_raw = (req, res, next) => {
                     doc
                         .font("Helvetica-Bold")
                         .fontSize(9)
-                        .text(productCode, 50, y)
-                        .text(productName, 90, y)
-                        .text(uom, 280, y, { width: 50, align: "right" })
-                        .text(quantity, 340, y, { width: 60, align: "right" })
-                        .text(unitPrice, 420, y, { width: 60, align: "right" })
+                        .text(productCode, 50, y, { width: 50 })
+                        .text(productName, 90, y, { width: 250 })
+                        .text(uom, 320, y, { width: 50, align: "right" })
+                        .text(quantity, 380, y, { width: 60, align: "right" })
+                        .text(unitPrice, 430, y, { width: 60, align: "right" })
                         .text(total, 480, y, { width: 70, align: "right" })
                 }
                 function generateHrBottom(doc, y) {
@@ -490,7 +489,7 @@ exports.print_purchase_orders_raw = (req, res, next) => {
                         const item = data.rawMaterials.map(data => {
                             let totalValue = parseInt(data.unitPrice) * parseInt(data.quantity)
                             let total = totalValue
-                            return formatNumber(total.toFixed(2))
+                            return total
                         })
 
                         for (let i = 0; i < Math.min(item.length); i++) {
