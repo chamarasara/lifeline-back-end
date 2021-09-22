@@ -99,8 +99,23 @@ exports.purchase_orders_raw_get_one = (req, res, next) => {
             {
                 '$lookup': {
                     from: 'rawmaterialmasters',
-                    localField: 'rawMaterials.id',
-                    foreignField: 'id',
+                    let: { materialId: "$rawMaterials.id" },
+                    pipeline: [
+                        {
+                            $match: {
+                                "$expr": { "$in": ["$id", "$$materialId"] }
+                            }
+                        },
+                        {
+                            "$addFields": {
+                                "sort": {
+                                    "$indexOfArray": ["$$materialId", "$id"]
+                                }
+                            }
+                        },
+                        { "$sort": { "sort": 1 } },
+                        { "$addFields": { "sort": "$$REMOVE" } }
+                    ],
                     as: 'rawMaterialsList'
                 }
             }
@@ -295,8 +310,23 @@ exports.print_purchase_orders_raw = (req, res, next) => {
             {
                 '$lookup': {
                     from: 'rawmaterialmasters',
-                    localField: 'rawMaterials.id',
-                    foreignField: 'id',
+                    let: { materialId: "$rawMaterials.id" },
+                    pipeline: [
+                        {
+                            $match: {
+                                "$expr": { "$in": ["$id", "$$materialId"] }
+                            }
+                        },
+                        {
+                            "$addFields": {
+                                "sort": {
+                                    "$indexOfArray": ["$$materialId", "$id"]
+                                }
+                            }
+                        },
+                        { "$sort": { "sort": 1 } },
+                        { "$addFields": { "sort": "$$REMOVE" } }
+                    ],
                     as: 'rawMaterialsList'
                 }
             }
@@ -419,8 +449,7 @@ exports.print_purchase_orders_raw = (req, res, next) => {
                             .font("Helvetica-Bold")
                             .text(`Order Number: ${data.orderNumber}`, 50, 200)
                             .text(`Order Date: ${moment(data.date).format('DD/MM/YYYY')}`, 50, 215)
-                            .text(`Credit Period: ${creditPeriod} Days`, 50, 230)
-                            .text(`Created By: ${data.userName}`, 50, 245)
+                            .text(`Created By: ${data.userName}`, 50, 230)
                             .text(`${companyName}`, 350, 200)
                             .font("Helvetica")
                             .text(`${no},${lane}`, 350, 215)
@@ -445,7 +474,7 @@ exports.print_purchase_orders_raw = (req, res, next) => {
                 function generateTableRow(doc, y, materialCodeRm, productName, uom, quantity, unitPrice, total) {
 
                     doc
-                        .font("Courier-Bold")
+                        .font("Helvetica")
                         .fontSize(9)
                         .text(materialCodeRm, 50, y, { width: 50 })
                         .text(productName, 90, y, { width: 250 })
@@ -457,7 +486,7 @@ exports.print_purchase_orders_raw = (req, res, next) => {
                 function generateTableRowBottom(doc, y, total1, total) {
 
                     doc
-                        .font("Courier-Bold")
+                        .font("Helvetica-Bold")
                         .fontSize(9)
                         .text(total1, 430, y, { width: 50, align: "right" })
                         .text(total, 480, y, { width: 70, align: "right" })
