@@ -228,6 +228,10 @@ exports.grn_details = (req, res, next) => {
                 error: err
             });
         });
+    const materialIdList = []
+    const matrialQuantityList = []
+        //Update inventory 
+
 }
 //Delete purchase orders
 exports.delete_purchase_order_raw = (req, res, next) => {
@@ -516,13 +520,13 @@ exports.print_purchase_orders_raw = (req, res, next) => {
                     const subtotal = result.map(data => {
 
                         const item = data.rawMaterials.map(data => {
-                            let totalValue = parseInt(data.unitPrice) * parseInt(data.quantity)
+                            let totalValue = Number(data.unitPrice) * Number(data.quantity)
                             let total = totalValue
                             return total
                         })
 
                         for (let i = 0; i < Math.min(item.length); i++) {
-                            let total = parseInt(item[i])
+                            let total = Number(item[i])
                             sum[i] = total
                         }
                         const totalSum = sum.reduce((a, b) => a + b, 0)
@@ -562,7 +566,7 @@ exports.print_purchase_orders_raw = (req, res, next) => {
                                 const product = products[i];
                                 const quantity = quantities[i]
                                 const position = orderTableTop + (i + 1) * 30;
-                                const subtotal = parseInt(quantity.quantity) * parseInt(quantity.unitPrice)
+                                const subtotal = Number(quantity.quantity) * Number(quantity.unitPrice)
                                 generateTableRow(
                                     doc,
                                     position,
@@ -570,8 +574,8 @@ exports.print_purchase_orders_raw = (req, res, next) => {
                                     product.materialName,
                                     quantity.uom,
                                     quantity.quantity,
-                                    formatNumber(parseInt(quantity.unitPrice).toFixed(2)),
-                                    formatNumber(parseInt(subtotal).toFixed(2))
+                                    formatNumber(Number(quantity.unitPrice).toFixed(2)),
+                                    formatNumber(Number(subtotal).toFixed(2))
                                 );
                                 generateHr(doc, position + 20);
                             }
