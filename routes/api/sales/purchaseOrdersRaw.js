@@ -42,11 +42,15 @@ router.patch('/update-purchase-order-raw/:id', PurchaseOrdersRawController.updat
 router.patch('/update-purchase-order-state-raw/:id', PurchaseOrdersRawController.update_purchase_order_state_raw);
 //GRN 
 router.patch('/grn-purchase-order-raw/:id', PurchaseOrdersRawController.grn_details);
+//Returns details
+router.patch('/returns-purchase-order-raw/:id', PurchaseOrdersRawController.returns_details);
 //Delete purchase order
 router.delete('/delete-purchase-order-raw/:id', PurchaseOrdersRawController.delete_purchase_order_raw);
 //Search
 router.post('/search-purchase-order-raw/', PurchaseOrdersRawController.search_purchase_orders_raw);
 //Print purchase order
 router.get('/print-purchase-order-raw/:id', PurchaseOrdersRawController.print_purchase_orders_raw);
+//Print grn
+router.get('/print-grn-raw/:id/:grnId', PurchaseOrdersRawController.print_purchase_orders_raw_grn);
 
 module.exports = router;

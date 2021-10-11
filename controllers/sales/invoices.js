@@ -951,7 +951,7 @@ exports.print_dispatch_note = (req, res, next) => {
             const data = result
             if (result) {
 
-                createInvoice(result, "./invoice.pdf")
+                createInvoice(result, "./dispatchnote.pdf")
                 //generate empty pdf
                 function createInvoice(result, path) {
                     console.log(result.products)
