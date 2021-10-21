@@ -198,6 +198,7 @@ exports.update_purchase_order_state_raw = (req, res, next) => {
 //Push GRN details to PO
 exports.grn_details = (req, res, next) => {
     Count.findOneAndUpdate({ id: 'grnNumberRm' }, { $inc: { seq: 1 } }, { "new": true }, (error, doc) => {
+      
         if (doc) {
             function getGrnNumber() {
                 for (var i = 0; i < 5; i++)
@@ -210,10 +211,11 @@ exports.grn_details = (req, res, next) => {
             const date = new Date()
             const data = req.body.rawMaterials
             const remarks = req.body.remarks
+            const additionalCharges = req.body.additionalCharges
             const grnNumber = getGrnNumber()
             PurchaseOrdersRaw.updateOne({ _id: req.params.id }, {
                 $push: {
-                    grnDetails: { grnId, date, grnNumber, remarks, data }
+                    grnDetails: { grnId, date, grnNumber, remarks, additionalCharges, data }
                 }
             })
                 .exec()
