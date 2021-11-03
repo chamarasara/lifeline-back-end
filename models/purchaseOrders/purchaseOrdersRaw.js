@@ -9,6 +9,8 @@ const PurchaseOrdersRawSchema = new mongoose.Schema({
     orderNumber: { type: String },
     rawMaterials: { type: Array },
     grnDetails: [{}],
+    bankPaymentsDetails: [{}],
+    cashPaymentsDetails: [{}],
     returnsDetails: [{}],
     userId: { type: String },
     userName: { type: String },

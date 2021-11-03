@@ -42,6 +42,10 @@ router.patch('/update-purchase-order-raw/:id', PurchaseOrdersRawController.updat
 router.patch('/update-purchase-order-state-raw/:id', PurchaseOrdersRawController.update_purchase_order_state_raw);
 //GRN 
 router.patch('/grn-purchase-order-raw/:id', PurchaseOrdersRawController.grn_details);
+//Bank payments
+router.patch('/bank-payments-purchase-order-raw/:id', PurchaseOrdersRawController.bank_payments_details);
+//Cash payments
+router.patch('/cash-payments-purchase-order-raw/:id', PurchaseOrdersRawController.cash_payments_details);
 //Returns details
 router.patch('/returns-purchase-order-raw/:id', PurchaseOrdersRawController.returns_details);
 //Delete purchase order

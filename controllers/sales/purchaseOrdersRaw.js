@@ -78,7 +78,7 @@ exports.purchase_orders_raw_get_all = (req, res, next) => {
         });
 }
 exports.purchase_orders_raw_get_one = (req, res, next) => {
-
+    console.log("Single PO", req.params.id)
     //PurchaseOrders.findById(req.params._id)
     PurchaseOrdersRaw.aggregate(
         [
@@ -116,6 +116,29 @@ exports.purchase_orders_raw_get_one = (req, res, next) => {
                         { "$addFields": { "sort": "$$REMOVE" } }
                     ],
                     as: 'rawMaterialsList'
+                }
+            },
+            {
+                '$lookup': {
+                    from: 'bankaccountsmasters',
+                    let: { bankId: "$bankPaymentsDetails.bank" },
+                    pipeline: [
+                        {
+                            $match: {
+                                "$expr": { "$in": ["$id", { $cond: { if: { $isArray: "$$bankId" }, then: "$$bankId", else: [] } }] }
+                            }
+                        },
+                        {
+                            "$addFields": {
+                                "sort": {
+                                    "$indexOfArray": ["$$bankId", "$id"]
+                                }
+                            }
+                        },
+                        { "$sort": { "sort": 1 } },
+                        { "$addFields": { "sort": "$$REMOVE" } }
+                    ],
+                    as: 'bankAccounts'
                 }
             }
         ]
@@ -198,7 +221,7 @@ exports.update_purchase_order_state_raw = (req, res, next) => {
 //Push GRN details to PO
 exports.grn_details = (req, res, next) => {
     Count.findOneAndUpdate({ id: 'grnNumberRm' }, { $inc: { seq: 1 } }, { "new": true }, (error, doc) => {
-      
+
         if (doc) {
             function getGrnNumber() {
                 for (var i = 0; i < 5; i++)
@@ -248,6 +271,75 @@ exports.grn_details = (req, res, next) => {
 
 
 }
+//Bank cheque payments 
+exports.bank_payments_details = (req, res, next) => {
+    console.log(req.body)
+    const paymentId = mongoose.Types.ObjectId()
+    const date = new Date()
+    const data = req.body
+    const chequeNumber = req.body.chequeNumber
+    const chequeDate = req.body.chequeDate
+    const amount = req.body.amount
+    const bank = req.body.bank
+    const remarks = req.body.remarks
+
+    PurchaseOrdersRaw.updateOne({ _id: req.params.id }, {
+        $push: {
+            bankPaymentsDetails: { paymentId, date, chequeNumber, chequeDate, amount, bank, remarks }
+        }
+    })
+        .exec()
+        .then(result => {
+            PurchaseOrdersRaw.findById(req.params.id)
+                .then(docs => {
+                    res.status(200).json(docs);
+                })
+                .catch(err => {
+                    res.status(500).json({
+                        error: err
+                    });
+                });
+        })
+        .catch(err => {
+            res.status(500).json({
+                error: err
+            });
+        });
+
+
+}
+exports.cash_payments_details = (req, res, next) => {
+    console.log(req.body)
+    const paymentId = mongoose.Types.ObjectId()
+    const date = new Date()
+    const amount = req.body.amount
+    const remarks = req.body.remarks
+
+    PurchaseOrdersRaw.updateOne({ _id: req.params.id }, {
+        $push: {
+            cashPaymentsDetails: { paymentId, date, amount, remarks }
+        }
+    })
+        .exec()
+        .then(result => {
+            PurchaseOrdersRaw.findById(req.params.id)
+                .then(docs => {
+                    res.status(200).json(docs);
+                })
+                .catch(err => {
+                    res.status(500).json({
+                        error: err
+                    });
+                });
+        })
+        .catch(err => {
+            res.status(500).json({
+                error: err
+            });
+        });
+
+
+}
 //Push GRN details to PO
 exports.returns_details = (req, res, next) => {
     console.log("req.body", req.body.rawMaterials)
@@ -274,7 +366,7 @@ exports.returns_details = (req, res, next) => {
                 .then(result => {
                     PurchaseOrdersRaw.findById(req.params.id)
                         .then(docs => {
-                            console.log("docs",docs)    
+                            console.log("docs", docs)
                             res.status(200).json(docs);
                         })
                         .catch(err => {
@@ -932,7 +1024,7 @@ exports.print_purchase_orders_raw_grn = (req, res, next) => {
                             return data
                         })
                         // console.log("singleData2",singleData2)
-                     
+
                         doc.font("Helvetica")
                         generateTableRowTop(
                             doc,
@@ -946,7 +1038,7 @@ exports.print_purchase_orders_raw_grn = (req, res, next) => {
                         );
                         generateHr(doc, orderTableTop + 20);
                         doc.font("Helvetica")
-                       
+
                         for (i = 0; i < materials.length; i++) {
                             console.log(singleData2.length)
                             for (let index = 0; index < singleData2.length; index++) {

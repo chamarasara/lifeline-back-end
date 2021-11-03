@@ -26,7 +26,6 @@ exports.add_new_invoice = (req, res, next) => {
 
             const productList = [];
 
-            console.log("req.body.products.length ****", req.body.products.length)
             for (let i = 0; i < req.body.products.length; i++) {
                 productList.push(mongoose.Types.ObjectId(req.body.products[i].id));
 
