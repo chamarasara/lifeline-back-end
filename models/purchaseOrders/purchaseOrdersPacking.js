@@ -9,6 +9,8 @@ const PurchaseOrdersPackingSchema = new mongoose.Schema({
     orderNumber: { type: String },
     packingMaterials: { type: Array },
     grnDetails: [{}],
+    bankPaymentsDetails: [{}],
+    cashPaymentsDetails: [{}],
     suplierInvoicePdf: { type: String, require: true },
     userId: { type: String },
     userName: { type: String },

@@ -140,6 +140,29 @@ exports.purchase_orders_raw_get_one = (req, res, next) => {
                     ],
                     as: 'bankAccounts'
                 }
+            },
+            {
+                '$lookup': {
+                    from: 'bankaccountsmasters',
+                    let: { bankId: "$additionalChargesChequePayments.bank" },
+                    pipeline: [
+                        {
+                            $match: {
+                                "$expr": { "$in": ["$id", { $cond: { if: { $isArray: "$$bankId" }, then: "$$bankId", else: [] } }] }
+                            }
+                        },
+                        {
+                            "$addFields": {
+                                "sort": {
+                                    "$indexOfArray": ["$$bankId", "$id"]
+                                }
+                            }
+                        },
+                        { "$sort": { "sort": 1 } },
+                        { "$addFields": { "sort": "$$REMOVE" } }
+                    ],
+                    as: 'bankAccountsAdditionalCharges'
+                }
             }
         ]
     )
@@ -337,8 +360,73 @@ exports.cash_payments_details = (req, res, next) => {
                 error: err
             });
         });
+}
+//Additional charges cheque payments 
+exports.additional_charges_bank_payments_details = (req, res, next) => {
+    console.log(req.body)
+    const paymentId = mongoose.Types.ObjectId()
+    const date = new Date()
+    const reason = req.body.reason
+    const amount = req.body.amount
+    const chequeNumber = req.body.chequeNumber
+    const chequeDate = req.body.chequeDate
+    const bank = req.body.bank
+    const remarks = req.body.remarks
 
+    PurchaseOrdersRaw.updateOne({ _id: req.params.id }, {
+        $push: {
+            additionalChargesChequePayments: { paymentId, date, chequeNumber, chequeDate, bank, reason, amount, remarks }
+        }
+    })
+        .exec()
+        .then(result => {
+            PurchaseOrdersRaw.findById(req.params.id)
+                .then(docs => {
+                    res.status(200).json(docs);
+                })
+                .catch(err => {
+                    res.status(500).json({
+                        error: err
+                    });
+                });
+        })
+        .catch(err => {
+            res.status(500).json({
+                error: err
+            });
+        });
+}
+//additional charges cash payments details
+exports.additional_charges_cash_payments_details = (req, res, next) => {
+    console.log(req.body)
+    const paymentId = mongoose.Types.ObjectId()
+    const date = new Date()
+    const amount = req.body.amount
+    const reason = req.body.reason
+    const remarks = req.body.remarks
 
+    PurchaseOrdersRaw.updateOne({ _id: req.params.id }, {
+        $push: {
+            additionalChargesCashPayments: { paymentId, date, amount, reason, remarks }
+        }
+    })
+        .exec()
+        .then(result => {
+            PurchaseOrdersRaw.findById(req.params.id)
+                .then(docs => {
+                    res.status(200).json(docs);
+                })
+                .catch(err => {
+                    res.status(500).json({
+                        error: err
+                    });
+                });
+        })
+        .catch(err => {
+            res.status(500).json({
+                error: err
+            });
+        });
 }
 //Push GRN details to PO
 exports.returns_details = (req, res, next) => {

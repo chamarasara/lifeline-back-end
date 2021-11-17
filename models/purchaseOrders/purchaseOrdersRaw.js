@@ -11,6 +11,8 @@ const PurchaseOrdersRawSchema = new mongoose.Schema({
     grnDetails: [{}],
     bankPaymentsDetails: [{}],
     cashPaymentsDetails: [{}],
+    additionalChargesChequePayments: [{}],
+    additionalChargesCashPayments: [{}],
     returnsDetails: [{}],
     userId: { type: String },
     userName: { type: String },

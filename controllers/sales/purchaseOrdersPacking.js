@@ -194,6 +194,132 @@ exports.update_purchase_order_state_packing = (req, res, next) => {
                 });
         })
 }
+//Push GRN details to PO
+exports.grn_details = (req, res, next) => {
+    console.log("Req body",req.body)
+    Count.findOneAndUpdate({ id: 'grnNumberPm' }, { $inc: { seq: 1 } }, { "new": true }, (error, doc) => {
+
+        if (doc) {
+            function getGrnNumber() {
+                for (var i = 0; i < 5; i++)
+                    var date = new Date()
+                const year = date.getFullYear()
+                const month = date.getMonth() + 1
+                return "GRN-PM-" + year.toString() + month.toString() + doc.seq
+            }
+            const grnId = mongoose.Types.ObjectId()
+            const date = new Date()
+            const data = req.body.packingMaterials
+            const remarks = req.body.remarks
+            const additionalCharges = req.body.additionalCharges
+            const grnNumber = getGrnNumber()
+            PurchaseOrdersPacking.updateOne({ _id: req.params.id }, {
+                $push: {
+                    grnDetails: { grnId, date, grnNumber, remarks, additionalCharges, data }
+                }
+            })
+                .exec()
+                .then(result => {
+                    PurchaseOrdersPacking.findById(req.params.id)
+                        .then(docs => {  
+                            console.log("docs", docs)
+                            res.status(200).json(docs);
+                        })
+                        .catch(err => {
+                            res.status(500).json({
+                                error: err
+                            });
+                        });
+                })
+                .catch(err => {
+                    res.status(500).json({
+                        error: err
+                    });
+                });
+            const materialIdList = []
+            const matrialQuantityList = []
+            //Update inventory
+        }
+
+    })
+    //req.setTimeout(2147483647);
+    // console.log(" req.body.rawMaterials", req.body.rawMaterials)
+    // const id = req.params.id;
+
+
+
+}
+//Bank cheque payments 
+exports.bank_payments_details = (req, res, next) => {
+    console.log(req.body)
+    const paymentId = mongoose.Types.ObjectId()
+    const date = new Date()
+    const data = req.body
+    const chequeNumber = req.body.chequeNumber
+    const chequeDate = req.body.chequeDate
+    const amount = req.body.amount
+    const bank = req.body.bank
+    const remarks = req.body.remarks
+
+    PurchaseOrdersPacking.updateOne({ _id: req.params.id }, {
+        $push: {
+            bankPaymentsDetails: { paymentId, date, chequeNumber, chequeDate, amount, bank, remarks }
+        }
+    })
+        .exec()
+        .then(result => {
+            PurchaseOrdersPacking.findById(req.params.id)
+                .then(docs => {
+                    res.status(200).json(docs);
+                })
+                .catch(err => {
+                    res.status(500).json({
+                        error: err
+                    });
+                });
+        })
+        .catch(err => {
+            res.status(500).json({
+                error: err
+            });
+        });
+
+
+}
+//cash payments
+exports.cash_payments_details = (req, res, next) => {
+    console.log(req.body)
+    const paymentId = mongoose.Types.ObjectId()
+    const date = new Date()
+    const amount = req.body.amount
+    const remarks = req.body.remarks
+
+    PurchaseOrdersPacking.updateOne({ _id: req.params.id }, {
+        $push: {
+            cashPaymentsDetails: { paymentId, date, amount, remarks }
+        }
+    })
+        .exec()
+        .then(result => {
+            PurchaseOrdersPacking.findById(req.params.id)
+                .then(docs => {
+                    res.status(200).json(docs);
+                })
+                .catch(err => {
+                    res.status(500).json({
+                        error: err
+                    });
+                });
+        })
+        .catch(err => {
+            res.status(500).json({
+                error: err
+            });
+        });
+
+
+}
+
 //Delete purchase orders
 exports.delete_purchase_order_packing = (req, res, next) => {
     const id = req.params.id;
