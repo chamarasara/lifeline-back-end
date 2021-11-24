@@ -257,11 +257,13 @@ exports.grn_details = (req, res, next) => {
             const date = new Date()
             const data = req.body.rawMaterials
             const remarks = req.body.remarks
+            const invoiceNumber = req.body.invoiceNumber
+            const invoiceDate = req.body.invoiceDate
             const additionalCharges = req.body.additionalCharges
             const grnNumber = getGrnNumber()
             PurchaseOrdersRaw.updateOne({ _id: req.params.id }, {
                 $push: {
-                    grnDetails: { grnId, date, grnNumber, remarks, additionalCharges, data }
+                    grnDetails: { grnId, date, grnNumber, remarks, invoiceNumber, invoiceDate, additionalCharges, data }
                 }
             })
                 .exec()

@@ -114,7 +114,54 @@ exports.purchase_orders_packing_get_one = (req, res, next) => {
                     ],
                     as: 'packingMaterialsList'
                 }
-            }]
+            },
+            {
+                '$lookup': {
+                    from: 'bankaccountsmasters',
+                    let: { bankId: "$bankPaymentsDetails.bank" },
+                    pipeline: [
+                        {
+                            $match: {
+                                "$expr": { "$in": ["$id", { $cond: { if: { $isArray: "$$bankId" }, then: "$$bankId", else: [] } }] }
+                            }
+                        },
+                        {
+                            "$addFields": {
+                                "sort": {
+                                    "$indexOfArray": ["$$bankId", "$id"]
+                                }
+                            }
+                        },
+                        { "$sort": { "sort": 1 } },
+                        { "$addFields": { "sort": "$$REMOVE" } }
+                    ],
+                    as: 'bankAccounts'
+                }
+            },
+            {
+                '$lookup': {
+                    from: 'bankaccountsmasters',
+                    let: { bankId: "$additionalChargesChequePayments.bank" },
+                    pipeline: [
+                        {
+                            $match: {
+                                "$expr": { "$in": ["$id", { $cond: { if: { $isArray: "$$bankId" }, then: "$$bankId", else: [] } }] }
+                            }
+                        },
+                        {
+                            "$addFields": {
+                                "sort": {
+                                    "$indexOfArray": ["$$bankId", "$id"]
+                                }
+                            }
+                        },
+                        { "$sort": { "sort": 1 } },
+                        { "$addFields": { "sort": "$$REMOVE" } }
+                    ],
+                    as: 'bankAccountsAdditionalCharges'
+                }
+            }
+        ]
     )
         .exec()
         .then(doc => {
@@ -211,18 +258,19 @@ exports.grn_details = (req, res, next) => {
             const date = new Date()
             const data = req.body.packingMaterials
             const remarks = req.body.remarks
+            const invoiceNumber = req.body.invoiceNumber
+             const invoiceDate = req.body.invoiceDate
             const additionalCharges = req.body.additionalCharges
             const grnNumber = getGrnNumber()
             PurchaseOrdersPacking.updateOne({ _id: req.params.id }, {
                 $push: {
-                    grnDetails: { grnId, date, grnNumber, remarks, additionalCharges, data }
+                    grnDetails: { grnId, date, grnNumber, remarks, invoiceNumber, invoiceDate, additionalCharges, data }
                 }
             })
                 .exec()
                 .then(result => {
                     PurchaseOrdersPacking.findById(req.params.id)
                         .then(docs => {  
-                            console.log("docs", docs)
                             res.status(200).json(docs);
                         })
                         .catch(err => {
@@ -252,9 +300,9 @@ exports.grn_details = (req, res, next) => {
 //Bank cheque payments 
 exports.bank_payments_details = (req, res, next) => {
     console.log(req.body)
+    console.log(req.params.id)
     const paymentId = mongoose.Types.ObjectId()
     const date = new Date()
-    const data = req.body
     const chequeNumber = req.body.chequeNumber
     const chequeDate = req.body.chequeDate
     const amount = req.body.amount
@@ -270,6 +318,7 @@ exports.bank_payments_details = (req, res, next) => {
         .then(result => {
             PurchaseOrdersPacking.findById(req.params.id)
                 .then(docs => {
+                    console.log("docs",docs)
                     res.status(200).json(docs);
                 })
                 .catch(err => {
@@ -303,6 +352,7 @@ exports.cash_payments_details = (req, res, next) => {
         .then(result => {
             PurchaseOrdersPacking.findById(req.params.id)
                 .then(docs => {
+                    console.log(docs)
                     res.status(200).json(docs);
                 })
                 .catch(err => {
@@ -319,7 +369,74 @@ exports.cash_payments_details = (req, res, next) => {
 
 
 }
+//Additional charges cheque payments 
+exports.additional_charges_bank_payments_details = (req, res, next) => {
+    console.log(req.body)
+    const paymentId = mongoose.Types.ObjectId()
+    const date = new Date()
+    const reason = req.body.reason
+    const amount = req.body.amount
+    const chequeNumber = req.body.chequeNumber
+    const chequeDate = req.body.chequeDate
+    const bank = req.body.bank
+    const remarks = req.body.remarks
 
+    PurchaseOrdersPacking.updateOne({ _id: req.params.id }, {
+        $push: {
+            additionalChargesChequePayments: { paymentId, date, chequeNumber, chequeDate, bank, reason, amount, remarks }
+        }
+    })
+        .exec()
+        .then(result => {
+            PurchaseOrdersPacking.findById(req.params.id)
+                .then(docs => {
+                    res.status(200).json(docs);
+                })
+                .catch(err => {
+                    res.status(500).json({
+                        error: err
+                    });
+                });
+        })
+        .catch(err => {
+            res.status(500).json({
+                error: err
+            });
+        });
+}
+//additional charges cash payments details
+exports.additional_charges_cash_payments_details = (req, res, next) => {
+    console.log(req.body)
+    const paymentId = mongoose.Types.ObjectId()
+    const date = new Date()
+    const amount = req.body.amount
+    const reason = req.body.reason
+    const remarks = req.body.remarks
+
+    PurchaseOrdersPacking.updateOne({ _id: req.params.id }, {
+        $push: {
+            additionalChargesCashPayments: { paymentId, date, amount, reason, remarks }
+        }
+    })
+        .exec()
+        .then(result => {
+            PurchaseOrdersPacking.findById(req.params.id)
+                .then(docs => {
+                    console.log(docs)
+                    res.status(200).json(docs);
+                })
+                .catch(err => {
+                    res.status(500).json({
+                        error: err
+                    });
+                });
+        })
+        .catch(err => {
+            res.status(500).json({
+                error: err
+            });
+        });
+}
 //Delete purchase orders
 exports.delete_purchase_order_packing = (req, res, next) => {
     const id = req.params.id;
