@@ -9,7 +9,7 @@ const Finishgoodsmasters = require('../../models/master/FinishGoodsMaster');
 
 //Add new purchase order
 exports.add_new_invoice = (req, res, next) => {
-
+    console.log(req.body)
     Count.findOneAndUpdate({ id: 'invoiceNo' }, { $inc: { seq: 1 } }, { "new": true }, (error, doc) => {
 
         if (doc) {
@@ -62,7 +62,7 @@ exports.add_new_invoice = (req, res, next) => {
                     quotationNumber: req.body.quotationNumber,
                     remarks: req.body.remarks,
                     reference: req.body.reference,
-                    transportCost: req.body.transportCost,
+                    additionalCharges: req.body.additionalCharges,
                     userId: req.body.user.user.userId,
                     userName: req.body.user.user.userName,
                     userRole: req.body.user.user.userRole,
@@ -76,6 +76,7 @@ exports.add_new_invoice = (req, res, next) => {
 
                 invoices.save()
                     .then(invoicesRes => {
+                        console.log("invoicesRes", invoicesRes)
                         res.status(200).json(invoicesRes);
                     })
                     .catch(err => {
@@ -178,6 +179,29 @@ exports.single_invoice = (req, res, next) => {
             },
             {
                 '$lookup': {
+                    from: 'bankaccountsmasters',
+                    let: { bankId: "$bankPaymentsDetails.bank" },
+                    pipeline: [
+                        {
+                            $match: {
+                                "$expr": { "$in": ["$id", { $cond: { if: { $isArray: "$$bankId" }, then: "$$bankId", else: [] } }] }
+                            }
+                        },
+                        {
+                            "$addFields": {
+                                "sort": {
+                                    "$indexOfArray": ["$$bankId", "$id"]
+                                }
+                            }
+                        },
+                        { "$sort": { "sort": 1 } },
+                        { "$addFields": { "sort": "$$REMOVE" } }
+                    ],
+                    as: 'bankAccounts'
+                }
+            },
+            {
+                '$lookup': {
                     from: 'customermasters',
                     localField: 'customerId',
                     foreignField: 'id',
@@ -233,6 +257,73 @@ exports.update_invoice = (req, res, next) => {
         })
         .catch(err => {
             //console.log(err)
+            res.status(500).json({
+                error: err
+            });
+        });
+}
+//Bank cheque payments 
+exports.bank_payments_details = (req, res, next) => {
+    console.log("Invoice payment body", req.body)
+    const paymentId = mongoose.Types.ObjectId()
+    const date = new Date()
+    const data = req.body
+    const chequeNumber = req.body.chequeNumber
+    const chequeDate = req.body.chequeDate
+    const amount = req.body.amount
+    const bank = req.body.bank
+    const remarks = req.body.remarks
+
+    Invoices.updateOne({ _id: req.params.id }, {
+        $push: {
+            bankPaymentsDetails: { paymentId, date, chequeNumber, chequeDate, amount, bank, remarks }
+        }
+    })
+        .exec()
+        .then(result => {
+            Invoices.findById(req.params.id)
+                .then(docs => {
+                    res.status(200).json(docs);
+                })
+                .catch(err => {
+                    res.status(500).json({
+                        error: err
+                    });
+                });
+        })
+        .catch(err => {
+            res.status(500).json({
+                error: err
+            });
+        });
+
+
+}
+exports.cash_payments_details = (req, res, next) => {
+    console.log(req.body)
+    const paymentId = mongoose.Types.ObjectId()
+    const date = new Date()
+    const amount = req.body.amount
+    const remarks = req.body.remarks
+
+    Invoices.updateOne({ _id: req.params.id }, {
+        $push: {
+            cashPaymentsDetails: { paymentId, date, amount, remarks }
+        }
+    })
+        .exec()
+        .then(result => {
+            Invoices.findById(req.params.id)
+                .then(docs => {
+                    res.status(200).json(docs);
+                })
+                .catch(err => {
+                    res.status(500).json({
+                        error: err
+                    });
+                });
+        })
+        .catch(err => {
             res.status(500).json({
                 error: err
             });
@@ -697,6 +788,13 @@ exports.print_invoice = (req, res, next) => {
                         .text(discountAmount, 400, y, { width: 70, align: "right" })
                         .text(total, 0, y, { align: "right" });
                 }
+                function generateAdditionalCharges(doc, y, reason, amount) {
+                    doc
+                        .font("Helvetica-Bold")
+                        .fontSize(9)
+                        .text(reason, 400, y, { width: 70, align: "right" })
+                        .text(amount, 0, y, { align: "right" });
+                }
                 function generateTableRowTop(doc, y, productCode, productName, quantity, rate, discount, discountAmount, total) {
                     doc
                         .font("Helvetica-Bold")
@@ -743,17 +841,42 @@ exports.print_invoice = (req, res, next) => {
                     })
                     return getTotal
                 }
-               function getTransportCost(result){
-                   let data= result.map(data=>{
+                function getTransportCost(result) {
+                    console.log("getTransportCost", result)
+                    let data = result.map(data => {
                         if (!data.transportCost) {
-                            return 0
-                        } else  {
+                            return 0.00
+                        } else {
                             return data.transportCost
                         }
                     })
-                   return data[0] 
+                    return data[0]
                 }
-
+                function getAdditionalCharges(result) {
+                    let data = result.map(data => {
+                        if (!data.additionalCharges) {
+                            console.log(0)
+                            return 0.00
+                        } else {
+                            const array = []
+                            const totalArray = data.additionalCharges.map(data => {
+                                let amount = Number(data.amount)
+                                for (let i = 0; i < array.length; i++) {
+                                    array[i] = amount
+                                }
+                                console.log(amount)
+                                return amount
+                            })
+                            const sumOfArray = totalArray.reduce((partial_sum, a) => partial_sum + a, 0)
+                            console.log(sumOfArray)
+                            return sumOfArray
+                        }
+                    })
+                    console.log("retunr data", data)
+                    return data[0]
+                }
+                console.log(getAdditionalCharges(result))
+                // console.log(getAdditionalCharges(result))
                 function getSubTotalWithTransport(result) {
                     const getTotal = result.map(data => {
                         const quantities = data.products.map(data => {
@@ -777,10 +900,10 @@ exports.print_invoice = (req, res, next) => {
 
                             //console.log(totalValue, "Total Value")
                         }
-                       
+
                         const total = totalValue.reduce((a, b) => (a + b))
-                        const transport = getTransportCost(result)
-                        const subtotal = total + transport
+                        const additionalCharges = getAdditionalCharges(result)
+                        const subtotal = total + additionalCharges
                         //console.log(totalValue.reduce((a, b) => a + b, 0), "total")
                         return formatNumber(subtotal.toFixed(2))
                     })
@@ -798,7 +921,10 @@ exports.print_invoice = (req, res, next) => {
                         const productsDetails = data.products.map(data => {
                             return data
                         })
-                        console.log(productsDetails)
+                        const additionalCharges = data.additionalCharges.map(data => {
+                            return data
+                        })
+                        console.log("additionalCharges", additionalCharges)
                         generateTableRowTop(
                             doc,
                             invoiceTableTop,
@@ -851,22 +977,27 @@ exports.print_invoice = (req, res, next) => {
                             "Subtotal",
                             getSubTotal(result)
                         );
+                        const transportcostposition = subtotalPosition + 15;
+                        for (let i = 0; i < additionalCharges.length; i++) {
+                            const info = additionalCharges[i]
+                            console.log("reason", info.reason)
+                            let amount = info.amount
+                            console.log("amount", amount)
+                            generateAdditionalCharges(
+                                doc,
+                                transportcostposition,
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "fuck",
+                                info.reason,
+                                amount
+                            );
 
+                        }
 
-
-                        const transportcostposition = subtotalPosition +  15;
-                        generateTableBottom(
-                            doc,
-                            transportcostposition,
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "(+) Transport",
-                            formatNumber(getTransportCost(result).toFixed(2))
-                        );
                         generateHrBottom(doc, transportcostposition + 10);
                         const totalcostposition = transportcostposition + 15;
                         generateTableBottom(

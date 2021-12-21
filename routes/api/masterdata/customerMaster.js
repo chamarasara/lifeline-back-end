@@ -48,7 +48,6 @@ router.get('/all-customers', async (req, res) => {
         const customerMaster = await CustomerMaster.find()
             .exec()
             .then(docs => {
-                console.log(docs);
                 res.status(200).json(docs);
             })
     } catch (error) {
@@ -62,7 +61,6 @@ router.get('/single-customer/:_id', async (req, res) => {
         const customerMaster = await CustomerMaster.findById(id)
             .exec()
             .then(docs => {
-                console.log(docs);
                 res.status(200).json(docs);
             })
     } catch (error) {

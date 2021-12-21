@@ -20,6 +20,10 @@ router.patch('/update-invoice/:id', InvoicesController.update_invoice);
 router.patch('/update-dispatch-note/:id', InvoicesController.dispatch_note, InventoryMiddleware.fifo );
 //Delete Invoice
 router.delete('/delete-invoice/:id', InvoicesController.delete_invoice);
+//Bank payments
+router.patch('/bank-payments-invoice/:id', InvoicesController.bank_payments_details);
+//Cash payments
+router.patch('/cash-payments-invoice/:id', InvoicesController.cash_payments_details);
 //Search
 router.post('/search-invoices/', InvoicesController.search_invoices);
 //Print invoice
