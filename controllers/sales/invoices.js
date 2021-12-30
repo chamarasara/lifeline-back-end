@@ -549,6 +549,7 @@ exports.search_invoices = (req, res, next) => {
 
 // Print Invoice
 exports.print_invoice = (req, res, next) => {
+    console.log("req.body", req.params.id)
     Invoices.aggregate(
         [
             {
@@ -600,11 +601,10 @@ exports.print_invoice = (req, res, next) => {
         .then(result => {
             const data = result
             if (result) {
-
+                // console.log("****",result)
                 createInvoice(result, "./invoice.pdf")
                 //generate empty pdf
                 function createInvoice(result, path) {
-                    console.log(result.products)
                     let i;
                     let end;
                     let doc = new PDFDocument({ bufferPages: true });
@@ -732,7 +732,7 @@ exports.print_invoice = (req, res, next) => {
                             .text(`Invoice Number: ${data.invoiceNumber}`, 50, 200)
                             .text(`Quotation Number: ${quotationNumber}`, 50, 215)
                             .text(`Invoice Date: ${moment(data.date).format('DD/MM/YYYY')}`, 50, 230)
-                            .text(`Due Date: ${moment(data.date).add('d', creditPeriod).format('DD/MM/YYYY')}`, 50, 245)
+                            .text(`Due Date: ${moment(data.date).add(creditPeriod, 'd').format('DD/MM/YYYY')}`, 50, 245)
                             .text(`Credit Period: ${creditPeriod} days`, 50, 260)
                             .text(`Your Reference: ${data.reference}`, 50, 275)
                             .text(`${companyName}`, 350, 200)
@@ -785,14 +785,14 @@ exports.print_invoice = (req, res, next) => {
                         .text(quantity, 250, y, { width: 60, align: "right" })
                         .text(rate, 300, y, { width: 60, align: "right" })
                         .text(discount, 350, y, { width: 50, align: "right" })
-                        .text(discountAmount, 400, y, { width: 70, align: "right" })
+                        .text(discountAmount, 380, y, { width: 70, align: "right" })
                         .text(total, 0, y, { align: "right" });
                 }
                 function generateAdditionalCharges(doc, y, reason, amount) {
                     doc
-                        .font("Helvetica-Bold")
+                        .font("Helvetica")
                         .fontSize(9)
-                        .text(reason, 400, y, { width: 70, align: "right" })
+                        .text(reason, 395, y, { width: 150, align: "left" })
                         .text(amount, 0, y, { align: "right" });
                 }
                 function generateTableRowTop(doc, y, productCode, productName, quantity, rate, discount, discountAmount, total) {
@@ -811,7 +811,7 @@ exports.print_invoice = (req, res, next) => {
                     return num.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,")
                 }
                 function getSubTotal(result) {
-                    console.log(result)
+                    // console.log("result",result)
                     const getTotal = result.map(data => {
                         const quantities = data.products.map(data => {
                             //console.log("quantity", data.quantity)
@@ -841,42 +841,34 @@ exports.print_invoice = (req, res, next) => {
                     })
                     return getTotal
                 }
-                function getTransportCost(result) {
-                    console.log("getTransportCost", result)
-                    let data = result.map(data => {
-                        if (!data.transportCost) {
-                            return 0.00
-                        } else {
-                            return data.transportCost
-                        }
-                    })
-                    return data[0]
-                }
+
                 function getAdditionalCharges(result) {
+
                     let data = result.map(data => {
                         if (!data.additionalCharges) {
-                            console.log(0)
+                            console.log("0", 0)
                             return 0.00
                         } else {
                             const array = []
                             const totalArray = data.additionalCharges.map(data => {
+                                // console.log(data)
                                 let amount = Number(data.amount)
                                 for (let i = 0; i < array.length; i++) {
                                     array[i] = amount
                                 }
-                                console.log(amount)
+                                // console.log(amount)
                                 return amount
                             })
                             const sumOfArray = totalArray.reduce((partial_sum, a) => partial_sum + a, 0)
-                            console.log(sumOfArray)
+                            // console.log(sumOfArray)
                             return sumOfArray
                         }
                     })
-                    console.log("retunr data", data)
+                    // console.log("retunr data", data[0])
                     return data[0]
                 }
-                console.log(getAdditionalCharges(result))
                 // console.log(getAdditionalCharges(result))
+
                 function getSubTotalWithTransport(result) {
                     const getTotal = result.map(data => {
                         const quantities = data.products.map(data => {
@@ -909,9 +901,25 @@ exports.print_invoice = (req, res, next) => {
                     })
                     return getTotal
                 }
+                function renderAdditionalCharges(result) {
+
+                    let data = result.map(data => {
+                        if (!data.additionalCharges) {
+                            return { reason: 'None', amount: 0.00 }
+                        } else {
+                            let additionalChargesList = data.additionalCharges.map(data => {
+                                return data
+                            })
+                            return additionalChargesList
+                        }
+
+                    })
+                    return data
+                }
+
                 //generate invoice table
                 function generateInvoiceTable(doc, result) {
-
+                    // console.log("invoice table",result )
                     const productTable = result.map(data => {
                         let i,
                             invoiceTableTop = 305;
@@ -978,28 +986,36 @@ exports.print_invoice = (req, res, next) => {
                             getSubTotal(result)
                         );
                         const transportcostposition = subtotalPosition + 15;
-                        for (let i = 0; i < additionalCharges.length; i++) {
-                            const info = additionalCharges[i]
-                            console.log("reason", info.reason)
-                            let amount = info.amount
-                            console.log("amount", amount)
+                        let additionalChargesPosition = subtotalPosition + 20;
+                        const additionalChargesList = renderAdditionalCharges(result)[0]
+                        console.log("func", additionalChargesList.length)
+                        if (additionalChargesList.length === 0) {
                             generateAdditionalCharges(
                                 doc,
                                 transportcostposition,
-                                "",
-                                "",
-                                "",
-                                "",
-                                "",
-                                "fuck",
-                                info.reason,
-                                amount
+                                "(+) Additional Charges",
+                                "0.00"
+                            );
+                        }
+
+                        for (let i = 0; i < additionalChargesList.length; i++) {
+                            const info = additionalChargesList[i]
+                            console.log("DATA", additionalChargesList[i].length)
+                            //console.log("reason", info.reason)
+                            let amount = Number(info.amount)
+                            // console.log("amount", amount)
+                            additionalChargesPosition = subtotalPosition + (i + 1) * 10;
+                            generateAdditionalCharges(
+                                doc,
+                                additionalChargesPosition,
+                                `(+) ${info.reason}`,
+                                formatNumber(amount.toFixed(2))
                             );
 
                         }
 
-                        generateHrBottom(doc, transportcostposition + 10);
-                        const totalcostposition = transportcostposition + 15;
+                        generateHrBottom(doc, additionalChargesPosition + 10);
+                        const totalcostposition = additionalChargesPosition + 15;
                         generateTableBottom(
                             doc,
                             totalcostposition,
@@ -1009,7 +1025,7 @@ exports.print_invoice = (req, res, next) => {
                             "",
                             "",
                             "",
-                            "Total",
+                            "Grand Total",
                             getSubTotalWithTransport(result)
                         );
                         const position = totalcostposition + 5;
